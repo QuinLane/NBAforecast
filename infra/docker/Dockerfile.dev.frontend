@@ -1,0 +1,23 @@
+# syntax=docker/dockerfile:1
+#
+# Development image for the Next.js frontend.
+# Requires the frontend/ directory to exist (created in T0.5).
+# Activate via: docker-compose --profile with-frontend up
+#
+# node_modules and .next are stored in named Docker volumes (not the bind mount)
+# to avoid cross-OS filesystem performance issues.
+
+FROM node:20-slim
+
+RUN npm install -g pnpm@9
+
+WORKDIR /app/frontend
+
+# Install dependencies (layer-cached; rebuild when package.json/pnpm-lock.yaml changes).
+COPY frontend/package.json frontend/pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
+
+ENV HOST=0.0.0.0
+EXPOSE 3000
+
+CMD ["pnpm", "dev"]

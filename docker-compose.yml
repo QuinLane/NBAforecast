@@ -1,0 +1,242 @@
+# NBAforecast — local development stack.
+#
+# Prerequisites:
+#   - Docker Desktop running
+#   - .env file present (copy .env.example → .env and fill in any overrides)
+#
+# Usage:
+#   docker-compose up                                 # infra + API
+#   docker-compose --profile workers up               # + Prefect worker (M1+)
+#   docker-compose --profile live up                  # + live poller (M4+)
+#   docker-compose --profile with-frontend up         # + Next.js dev server (T0.5+)
+#
+# Ports:
+#   5432  Postgres
+#   6379  Redis
+#   9000  MinIO S3 API
+#   9001  MinIO console  (http://localhost:9001  user: minioadmin / minioadmin)
+#   5000  MLflow UI      (http://localhost:5000)
+#   8000  FastAPI        (http://localhost:8000/docs)
+#   3000  Next.js        (http://localhost:3000, with-frontend profile only)
+
+name: nbaforecast
+
+services:
+
+  # ── Infrastructure ────────────────────────────────────────────────────────────
+
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: nbaforecast
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d nbaforecast"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  minio:
+    image: quay.io/minio/minio:latest
+    restart: unless-stopped
+    command: server /data --console-address :9001
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # One-shot: creates the artifact bucket if it doesn't already exist.
+  minio-init:
+    image: quay.io/minio/mc:latest
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: /bin/sh
+    command:
+      - -c
+      - |
+        mc alias set local http://minio:9000 minioadmin minioadmin &&
+        mc mb --ignore-existing local/nbaforecast &&
+        echo 'MinIO bucket nbaforecast ready.'
+    restart: "no"
+
+  mlflow:
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile.mlflow
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+    command:
+      - mlflow
+      - server
+      - --backend-store-uri
+      - postgresql+psycopg2://postgres:postgres@postgres:5432/nbaforecast
+      - --default-artifact-root
+      - s3://nbaforecast
+      - --host
+      - "0.0.0.0"
+      - --port
+      - "5000"
+    environment:
+      AWS_ACCESS_KEY_ID: minioadmin
+      AWS_SECRET_ACCESS_KEY: minioadmin
+      MLFLOW_S3_ENDPOINT_URL: http://minio:9000
+    ports:
+      - "5000:5000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # ── Backend services ──────────────────────────────────────────────────────────
+  #
+  # All three share the same dev image.  Source is mounted read-only so code
+  # changes are picked up without a rebuild.  The entrypoints
+  # (nbaforecast-api, nbaforecast-worker, nbaforecast-poller) are created in
+  # T0.4 (api) and later milestones (worker, poller).
+  #
+  # Until the entrypoints exist, these containers will crash on startup —
+  # that is expected and will resolve as each task is completed.
+
+  api:
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile.dev.backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+    environment:
+      NBAF_POSTGRES_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/nbaforecast
+      NBAF_REDIS_URL: redis://redis:6379/0
+      NBAF_S3_ENDPOINT_URL: http://minio:9000
+      NBAF_S3_ACCESS_KEY: minioadmin
+      NBAF_S3_SECRET_KEY: minioadmin
+      NBAF_MLFLOW_TRACKING_URI: http://mlflow:5000
+      NBAF_ENV: development
+      NBAF_API_HOST: "0.0.0.0"
+      NBAF_API_PORT: "8000"
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend/src:/app/backend/src:ro
+    command: ["nbaforecast-api"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # Profile: workers — activate after M1 (Prefect flows exist)
+  worker:
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile.dev.backend
+    profiles: [workers]
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+    environment:
+      NBAF_POSTGRES_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/nbaforecast
+      NBAF_REDIS_URL: redis://redis:6379/0
+      NBAF_S3_ENDPOINT_URL: http://minio:9000
+      NBAF_S3_ACCESS_KEY: minioadmin
+      NBAF_S3_SECRET_KEY: minioadmin
+      NBAF_MLFLOW_TRACKING_URI: http://mlflow:5000
+      NBAF_ENV: development
+    volumes:
+      - ./backend/src:/app/backend/src:ro
+    command: ["nbaforecast-worker"]
+
+  # Profile: live — activate after M4 (live poller exists)
+  poller:
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile.dev.backend
+    profiles: [live]
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      NBAF_POSTGRES_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/nbaforecast
+      NBAF_REDIS_URL: redis://redis:6379/0
+      NBAF_S3_ENDPOINT_URL: http://minio:9000
+      NBAF_S3_ACCESS_KEY: minioadmin
+      NBAF_S3_SECRET_KEY: minioadmin
+      NBAF_MLFLOW_TRACKING_URI: http://mlflow:5000
+      NBAF_ENV: development
+    volumes:
+      - ./backend/src:/app/backend/src:ro
+    command: ["nbaforecast-poller"]
+
+  # ── Frontend ──────────────────────────────────────────────────────────────────
+  # Profile: with-frontend — activate after T0.5 (Next.js scaffold exists)
+
+  frontend:
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile.dev.frontend
+    profiles: [with-frontend]
+    restart: unless-stopped
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app/frontend:delegated
+      - frontend_node_modules:/app/frontend/node_modules
+      - frontend_next:/app/frontend/.next
+
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:
+  frontend_node_modules:
+  frontend_next:

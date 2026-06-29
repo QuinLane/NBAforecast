@@ -1,0 +1,40 @@
+# ── Version control ────────────────────────────────────────────────────────────
+.git
+.gitignore
+.gitattributes
+
+# ── Python build artifacts ──────────────────────────────────────────────────────
+backend/.venv
+**/__pycache__
+**/.pytest_cache
+**/.mypy_cache
+**/.ruff_cache
+**/*.egg-info
+**/dist/
+
+# ── Node build artifacts ────────────────────────────────────────────────────────
+frontend/node_modules
+frontend/.next
+frontend/.nuxt
+frontend/out/
+
+# ── Environment / secrets (never in build context) ─────────────────────────────
+.env
+.env.*
+!.env.example
+
+# ── Data (large; not needed in images) ─────────────────────────────────────────
+data/
+*.parquet
+*.arrow
+*.feather
+
+# ── Planning docs ───────────────────────────────────────────────────────────────
+plans/
+
+# ── Editor / OS ────────────────────────────────────────────────────────────────
+.idea/
+.vscode/
+*.code-workspace
+.DS_Store
+Thumbs.db

@@ -1,0 +1,36 @@
+# syntax=docker/dockerfile:1
+#
+# Development image for the nbaforecast Python backend.
+# Used for the api, worker, and poller services in docker-compose.yml.
+#
+# The source tree (backend/src/) is bind-mounted at runtime, so code changes
+# are reflected immediately without rebuilding.  Rebuild only when
+# backend/pyproject.toml or backend/uv.lock changes.
+
+FROM python:3.12-slim
+
+# curl is needed for the docker-compose healthcheck on the api service.
+# libpq-dev + gcc are needed to compile psycopg's C extension.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl gcc libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# ── uv ─────────────────────────────────────────────────────────────────────────
+COPY --from=ghcr.io/astral-sh/uv:0.11.25 /uv /usr/local/bin/uv
+
+WORKDIR /app/backend
+
+# ── Dependencies (cached layer) ─────────────────────────────────────────────────
+# Install third-party deps WITHOUT the nbaforecast package itself.  This layer is
+# reused whenever pyproject.toml/uv.lock are unchanged, regardless of source edits.
+COPY backend/pyproject.toml backend/uv.lock ./
+RUN uv sync --frozen --no-dev --no-install-project
+
+# ── Source ─────────────────────────────────────────────────────────────────────
+# src/ must exist before the second `uv sync` installs nbaforecast in editable mode
+# because hatchling scans the package tree at install time.
+# Overridden by the docker-compose volume mount for local development.
+COPY backend/src ./src
+RUN uv sync --frozen --no-dev
+
+ENV PATH="/app/backend/.venv/bin:$PATH"

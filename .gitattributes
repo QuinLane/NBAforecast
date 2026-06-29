@@ -1,0 +1,16 @@
+# Normalize line endings to LF everywhere (code runs in Linux containers).
+* text=auto eol=lf
+
+# Binaries — no line-ending conversion.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.webp binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.eot binary
+*.pkl binary
+*.parquet binary

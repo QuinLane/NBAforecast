@@ -1,0 +1,57 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+dist/
+build/
+.venv/
+*.egg
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# uv
+.uv/
+uv.lock.bak
+
+# Environment
+.env
+*.env.local
+.env.*.local
+
+# Node
+node_modules/
+.next/
+out/
+.pnpm-store/
+
+# Data (large; lives on disk, not in git)
+data/
+*.parquet
+*.csv.gz
+*.pickle
+*.pkl
+
+# MLflow / model artifacts
+mlruns/
+mlartifacts/
+
+# Docker
+.docker/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Secrets
+*.pem
+*.key

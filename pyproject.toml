@@ -39,6 +39,7 @@ strict = true
 namespace_packages = true
 explicit_package_bases = true
 mypy_path = ["backend/src"]
+plugins   = ["pydantic.mypy"]
 
 # Stubs / third-party with missing types
 [[tool.mypy.overrides]]

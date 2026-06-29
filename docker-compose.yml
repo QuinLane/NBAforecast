@@ -82,13 +82,9 @@ services:
     volumes:
       - minio_data:/data
     healthcheck:
-      # Modern MinIO images (2024+) are UBI-minimal and do not ship curl.
-      # Use the bundled mc client instead; it reads credentials from env vars.
-      test:
-        - "CMD-SHELL"
-        - >-
-          mc alias set hc http://localhost:9000 $MINIO_ROOT_USER $MINIO_ROOT_PASSWORD
-          --api S3v4 >/dev/null 2>&1 && mc ready hc
+      # mc is bundled in the minio server image; 'local' alias is pre-configured
+      # by the server at startup so no alias-set step is needed.
+      test: ["CMD", "mc", "ready", "local"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -99,11 +95,14 @@ services:
     depends_on:
       minio:
         condition: service_healthy
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
     entrypoint: /bin/sh
     command:
       - -c
       - |
-        mc alias set local http://minio:9000 minioadmin minioadmin &&
+        mc alias set local http://minio:9000 $MINIO_ROOT_USER $MINIO_ROOT_PASSWORD &&
         mc mb --ignore-existing local/nbaforecast &&
         echo 'MinIO bucket nbaforecast ready.'
     restart: "no"
@@ -235,7 +234,7 @@ services:
     restart: unless-stopped
     depends_on:
       api:
-        condition: service_healthy
+        condition: service_started
     environment:
       NEXT_PUBLIC_API_URL: http://localhost:8000
     ports:

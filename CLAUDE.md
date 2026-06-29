@@ -40,6 +40,18 @@ Sonnet 4.6 for mechanical work (M0–M1, boilerplate, parallel agents); Opus 4.8
 correctness-sensitive work (M2 modeling, leakage, RAPM, calibration, explainability).
 
 ## Skills cadence
-Invoke the right skill at the right time (full table in `plans/implementation-plan.md` §5):
-`/code-review` before every PR (`/code-review ultra` on the M2 spine); `/verify` + `/run` at
-milestone gates (M2/M4/M5); `/review` on each agent PR at M3; `/security-review` before deploy (M6).
+
+| Milestone | Code review rule |
+|-----------|-----------------|
+| M0 T0.4–T0.5 | **None** — stubs ≤ 60 LOC; inline manual scan only |
+| M1 tasks | `/code-review` on the one PR per task that has real logic; skip pure boilerplate |
+| M2 spine | `/code-review ultra` on every PR — leakage, calibration, and the `ModelHead` interface are hard to fix retroactively |
+| M3 agent PRs | `/code-review` on each agent PR (parallel work has cross-cutting blind spots) |
+| M4–M5 | `/code-review` on PRs with non-trivial logic; skip glue/config |
+| M6 | `/security-review` before deploy |
+
+Milestone gates (M2/M4/M5) also get `/verify` + `/run`.
+
+**Why:** the 8-angle skill costs ~13 sub-agent calls per PR. On config/scaffolding that cost
+is disproportionate to the risk. Save it for code where bugs are subtle and expensive to
+find later (ML correctness, API contracts, live-system timing).

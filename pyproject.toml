@@ -22,7 +22,6 @@ select = [
     "PT",   # flake8-pytest-style
 ]
 ignore = [
-    "S101",   # assert — allowed in tests (see per-file-ignores)
     "S104",   # binding 0.0.0.0 — fine in Docker
 ]
 
@@ -37,8 +36,6 @@ indent-style = "space"
 [tool.mypy]
 python_version = "3.12"
 strict = true
-warn_return_any = true
-warn_unused_configs = true
 namespace_packages = true
 explicit_package_bases = true
 mypy_path = ["backend/src"]

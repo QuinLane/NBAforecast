@@ -31,6 +31,14 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+      redis:
+        image: redis:7
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     defaults:
       run:
         working-directory: backend
@@ -38,10 +46,11 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@d4b2f3b6ac67e2c755f6b28aa1d5b4f5a8df1e45  # v5.4.2
         with:
           enable-cache: true
           cache-dependency-glob: backend/uv.lock
+          uv-version: "0.11.25"
 
       - name: Install Python 3.12
         run: uv python install 3.12
@@ -62,6 +71,7 @@ jobs:
         run: uv run pytest tests/ -v --tb=short
         env:
           NBAF_POSTGRES_URL: postgresql+asyncpg://postgres:test@localhost:5432/nbaforecast_test
+          NBAF_REDIS_URL: redis://localhost:6379/0
           NBAF_ENV: test
 
   # ---------------------------------------------------------------------------
@@ -78,7 +88,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@a3252b1c1c842ca0a9ab5c8b0bc8f3e1aa7c3de3  # v4.1.0
         with:
           version: 9
 
@@ -107,19 +117,21 @@ jobs:
       - name: OpenAPI codegen drift check
         run: |
           pnpm generate-api-client
-          git diff --exit-code lib/api-client
+          git diff --exit-code -- lib/api-client
 
   # ---------------------------------------------------------------------------
   # Build Docker images (main branch only; activates once Dockerfiles exist).
+  # Only runs when both upstream jobs succeeded or were skipped — never on failure.
   # ---------------------------------------------------------------------------
   build-images:
     name: Build images
     runs-on: ubuntu-latest
     needs: [backend, frontend]
     if: |
-      always() &&
       github.ref == 'refs/heads/main' &&
-      hashFiles('infra/docker/Dockerfile.backend') != ''
+      hashFiles('infra/docker/Dockerfile.backend') != '' &&
+      (needs.backend.result == 'success' || needs.backend.result == 'skipped') &&
+      (needs.frontend.result == 'success' || needs.frontend.result == 'skipped')
     steps:
       - uses: actions/checkout@v4
 

@@ -9,7 +9,7 @@ repos:
         types_or: [python, pyi]
 
   - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: v4.0.0-alpha.8
+    rev: v3.5.3
     hooks:
       - id: prettier
         types_or: [ts, tsx, javascript, jsx, json, yaml, markdown]
@@ -32,3 +32,22 @@ repos:
         args: ["--maxkb=500"]
       - id: no-commit-to-branch
         args: ["--branch", "main"]
+
+  # mypy and eslint run as local hooks so they share the project's own
+  # installed environment (uv venv / node_modules). Each hook skips
+  # gracefully when its directory doesn't exist yet (pre-T0.2 / pre-T0.5).
+  - repo: local
+    hooks:
+      - id: mypy
+        name: mypy
+        language: system
+        entry: bash -c 'if [ -d backend/src ]; then cd backend && uv run mypy src; fi'
+        types: [python]
+        pass_filenames: false
+
+      - id: eslint
+        name: eslint
+        language: system
+        entry: bash -c 'if [ -d frontend/node_modules ]; then cd frontend && pnpm lint; fi'
+        files: \.(ts|tsx|js|jsx)$
+        pass_filenames: false

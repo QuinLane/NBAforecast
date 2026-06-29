@@ -2120,6 +2120,7 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "alembic" },
+    { name = "asyncpg" },
     { name = "fastapi" },
     { name = "httpx" },
     { name = "lightgbm" },
@@ -2138,7 +2139,7 @@ dependencies = [
     { name = "redis", extra = ["hiredis"] },
     { name = "scikit-learn" },
     { name = "scipy" },
-    { name = "sqlalchemy" },
+    { name = "sqlalchemy", extra = ["asyncio"] },
     { name = "uvicorn", extra = ["standard"] },
     { name = "xgboost" },
 ]
@@ -2150,7 +2151,6 @@ explain = [
 
 [package.dev-dependencies]
 dev = [
-    { name = "httpx" },
     { name = "mypy" },
     { name = "pandas-stubs" },
     { name = "pytest" },
@@ -2163,6 +2163,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "alembic", specifier = ">=1.13.0" },
+    { name = "asyncpg", specifier = ">=0.29.0" },
     { name = "fastapi", specifier = ">=0.112.0" },
     { name = "httpx", specifier = ">=0.27.0" },
     { name = "lightgbm", specifier = ">=4.4.0" },
@@ -2175,13 +2176,13 @@ requires-dist = [
     { name = "prefect", specifier = ">=3.0.0" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.1.0" },
     { name = "pyarrow", specifier = ">=16.0.0" },
-    { name = "pydantic", specifier = ">=2.7.0" },
+    { name = "pydantic", specifier = ">=2.9.0" },
     { name = "pydantic-settings", specifier = ">=2.3.0" },
     { name = "redis", extras = ["hiredis"], specifier = ">=5.0.0" },
     { name = "scikit-learn", specifier = ">=1.5.0" },
     { name = "scipy", specifier = ">=1.13.0" },
     { name = "shap", marker = "extra == 'explain'", specifier = ">=0.46.0" },
-    { name = "sqlalchemy", specifier = ">=2.0.0" },
+    { name = "sqlalchemy", extras = ["asyncio"], specifier = ">=2.0.0" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.30.0" },
     { name = "xgboost", specifier = ">=2.1.0" },
 ]
@@ -2189,7 +2190,6 @@ provides-extras = ["explain"]
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "httpx", specifier = ">=0.27.0" },
     { name = "mypy", specifier = ">=1.10.0" },
     { name = "pandas-stubs", specifier = ">=2.2.0" },
     { name = "pytest", specifier = ">=8.2.0" },

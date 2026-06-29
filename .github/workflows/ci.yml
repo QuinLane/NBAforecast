@@ -1,0 +1,139 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# ---------------------------------------------------------------------------
+# Backend — lint, types, tests
+# Activates once backend/pyproject.toml + backend/uv.lock exist (T0.2+).
+# ---------------------------------------------------------------------------
+jobs:
+  backend:
+    name: Backend
+    runs-on: ubuntu-latest
+    if: hashFiles('backend/pyproject.toml') != '' && hashFiles('backend/uv.lock') != ''
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: nbaforecast_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+
+      - name: Install Python 3.12
+        run: uv python install 3.12
+
+      - name: Install dependencies
+        run: uv sync --frozen --all-extras
+
+      - name: Ruff — lint
+        run: uv run ruff check src tests
+
+      - name: Ruff — format
+        run: uv run ruff format --check src tests
+
+      - name: mypy
+        run: uv run mypy src
+
+      - name: pytest
+        run: uv run pytest tests/ -v --tb=short
+        env:
+          NBAF_POSTGRES_URL: postgresql+asyncpg://postgres:test@localhost:5432/nbaforecast_test
+          NBAF_ENV: test
+
+  # ---------------------------------------------------------------------------
+  # Frontend — lint, types, tests, build, OpenAPI drift check
+  # Activates once frontend/package.json exists (T0.5+).
+  # ---------------------------------------------------------------------------
+  frontend:
+    name: Frontend
+    runs-on: ubuntu-latest
+    if: hashFiles('frontend/package.json') != ''
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: ESLint
+        run: pnpm lint
+
+      - name: TypeScript
+        run: pnpm type-check
+
+      - name: Vitest
+        run: pnpm test --run
+
+      - name: Build
+        run: pnpm build
+
+      - name: OpenAPI codegen drift check
+        run: |
+          pnpm generate-api-client
+          git diff --exit-code lib/api-client
+
+  # ---------------------------------------------------------------------------
+  # Build Docker images (main branch only; activates once Dockerfiles exist).
+  # ---------------------------------------------------------------------------
+  build-images:
+    name: Build images
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+    if: |
+      always() &&
+      github.ref == 'refs/heads/main' &&
+      hashFiles('infra/docker/Dockerfile.backend') != ''
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build backend image
+        run: |
+          docker build \
+            -f infra/docker/Dockerfile.backend \
+            -t nbaforecast-backend:${{ github.sha }} \
+            .
+
+      - name: Build frontend image
+        if: hashFiles('infra/docker/Dockerfile.frontend') != ''
+        run: |
+          docker build \
+            -f infra/docker/Dockerfile.frontend \
+            -t nbaforecast-frontend:${{ github.sha }} \
+            .

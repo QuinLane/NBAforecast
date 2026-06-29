@@ -140,6 +140,12 @@ Source of the RAPM stint matrix ([rapm.md](rapm.md)).
 
 ## 4. Gold / feature tables
 
+> **Built in T2.3, not T1.1.** These tables' columns are finalized in
+> [feature-engineering.md §4](feature-engineering.md) and their SQLAlchemy models + Alembic
+> migration are owned by feature-engineering Prompt 5 (T2.3). T1.1 implements only §§2, 3, 5
+> (the fully-specified reference, silver, and serving/model tables). Their Parquet schemas
+> likewise ship with T2.3.
+
 Columns follow the catalog in [feature-engineering.md §4](feature-engineering.md). Rolling features
 use the naming convention **`roll{N}_{metric}`** (e.g., `roll10_net_rating`). All carry
 `feature_version VARCHAR` and `created_at`.
@@ -233,10 +239,11 @@ possessions ──► (RAPM stint matrix) ──► player_rapm ──► featur
 
 ## 8. Build prompt (executable)
 
-> **Prompt — Implement the schema.** Create SQLAlchemy 2.0 models for **every** table in §§2–5
-> exactly as specified (types, PKs, FKs, CHECK constraints, indexes), an Alembic migration
-> creating them, and matching pyarrow Parquet schemas for the silver + gold tables partitioned by
-> `season_start_year`. This is the canonical realization that
+> **Prompt — Implement the schema.** Create SQLAlchemy 2.0 models for the **fully-specified**
+> tables in §§2, 3, 5 exactly as specified (types, PKs, FKs, CHECK constraints, indexes), an
+> Alembic migration creating them, and matching pyarrow Parquet schemas for the silver tables
+> partitioned by `season_start_year`. The §4 gold/feature tables are deferred to T2.3 (see the §4
+> note) since their columns are finalized there. This is the canonical realization that
 > [data-pipeline.md](data-pipeline.md)/[feature-engineering.md](feature-engineering.md)/[rapm.md](rapm.md)/[live-system.md](live-system.md)
 > build prompts depend on. Add a test asserting every model's columns/keys match this doc.
 

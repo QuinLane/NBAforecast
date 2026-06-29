@@ -1,13 +1,13 @@
 # syntax=docker/dockerfile:1
 #
 # MLflow tracking server with Postgres backend-store and MinIO artifact storage.
-# Extends the official MLflow base with the drivers those backends require.
 
 FROM python:3.12-slim
 
-# curl: healthcheck; libpq-dev + gcc: build psycopg2-binary
+# curl: docker-compose healthcheck
+# libpq-dev is NOT needed — psycopg2-binary is a pre-compiled wheel that bundles libpq.
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends curl gcc libpq-dev \
+    && apt-get install -y --no-install-recommends curl \
     && rm -rf /var/lib/apt/lists/*
 
 RUN pip install --no-cache-dir \

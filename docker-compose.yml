@@ -21,6 +21,17 @@
 
 name: nbaforecast
 
+# Shared env block for api / worker / poller — each service merges this anchor
+# and adds any service-specific keys on top.
+x-backend-env: &backend-env
+  NBAF_POSTGRES_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/nbaforecast
+  NBAF_REDIS_URL: redis://redis:6379/0
+  NBAF_S3_ENDPOINT_URL: http://minio:9000
+  NBAF_S3_ACCESS_KEY: minioadmin
+  NBAF_S3_SECRET_KEY: minioadmin
+  NBAF_MLFLOW_TRACKING_URI: http://mlflow:5000
+  NBAF_ENV: development
+
 services:
 
   # ── Infrastructure ────────────────────────────────────────────────────────────
@@ -36,6 +47,9 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      # Creates the 'mlflow' database alongside 'nbaforecast' on first boot.
+      # MLflow needs its own namespace; sharing the app DB pollutes Alembic's schema.
+      - ./infra/postgres/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d nbaforecast"]
       interval: 10s
@@ -68,7 +82,13 @@ services:
     volumes:
       - minio_data:/data
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      # Modern MinIO images (2024+) are UBI-minimal and do not ship curl.
+      # Use the bundled mc client instead; it reads credentials from env vars.
+      test:
+        - "CMD-SHELL"
+        - >-
+          mc alias set hc http://localhost:9000 $MINIO_ROOT_USER $MINIO_ROOT_PASSWORD
+          --api S3v4 >/dev/null 2>&1 && mc ready hc
       interval: 10s
       timeout: 5s
       retries: 5
@@ -98,11 +118,12 @@ services:
         condition: service_healthy
       minio-init:
         condition: service_completed_successfully
+    # ENTRYPOINT in Dockerfile.mlflow is already ["mlflow"], so command must
+    # begin with the sub-command (server), not the binary name again.
     command:
-      - mlflow
       - server
       - --backend-store-uri
-      - postgresql+psycopg2://postgres:postgres@postgres:5432/nbaforecast
+      - postgresql+psycopg2://postgres:postgres@postgres:5432/mlflow
       - --default-artifact-root
       - s3://nbaforecast
       - --host
@@ -145,13 +166,7 @@ services:
       minio-init:
         condition: service_completed_successfully
     environment:
-      NBAF_POSTGRES_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/nbaforecast
-      NBAF_REDIS_URL: redis://redis:6379/0
-      NBAF_S3_ENDPOINT_URL: http://minio:9000
-      NBAF_S3_ACCESS_KEY: minioadmin
-      NBAF_S3_SECRET_KEY: minioadmin
-      NBAF_MLFLOW_TRACKING_URI: http://mlflow:5000
-      NBAF_ENV: development
+      <<: *backend-env
       NBAF_API_HOST: "0.0.0.0"
       NBAF_API_PORT: "8000"
     ports:
@@ -181,13 +196,7 @@ services:
       minio-init:
         condition: service_completed_successfully
     environment:
-      NBAF_POSTGRES_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/nbaforecast
-      NBAF_REDIS_URL: redis://redis:6379/0
-      NBAF_S3_ENDPOINT_URL: http://minio:9000
-      NBAF_S3_ACCESS_KEY: minioadmin
-      NBAF_S3_SECRET_KEY: minioadmin
-      NBAF_MLFLOW_TRACKING_URI: http://mlflow:5000
-      NBAF_ENV: development
+      <<: *backend-env
     volumes:
       - ./backend/src:/app/backend/src:ro
     command: ["nbaforecast-worker"]
@@ -205,19 +214,18 @@ services:
       redis:
         condition: service_healthy
     environment:
-      NBAF_POSTGRES_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/nbaforecast
-      NBAF_REDIS_URL: redis://redis:6379/0
-      NBAF_S3_ENDPOINT_URL: http://minio:9000
-      NBAF_S3_ACCESS_KEY: minioadmin
-      NBAF_S3_SECRET_KEY: minioadmin
-      NBAF_MLFLOW_TRACKING_URI: http://mlflow:5000
-      NBAF_ENV: development
+      <<: *backend-env
     volumes:
       - ./backend/src:/app/backend/src:ro
     command: ["nbaforecast-poller"]
 
   # ── Frontend ──────────────────────────────────────────────────────────────────
   # Profile: with-frontend — activate after T0.5 (Next.js scaffold exists)
+  #
+  # NEXT_PUBLIC_API_URL is correct for browser-side fetch (calls come from the
+  # user's machine).  SSR calls (server-side, inside the container) need an
+  # internal URL — add INTERNAL_API_URL=http://api:8000 in T0.5 when wiring
+  # getServerSideProps / Server Components.
 
   frontend:
     build:
@@ -225,6 +233,9 @@ services:
       dockerfile: infra/docker/Dockerfile.dev.frontend
     profiles: [with-frontend]
     restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
     environment:
       NEXT_PUBLIC_API_URL: http://localhost:8000
     ports:

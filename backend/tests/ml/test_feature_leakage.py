@@ -13,82 +13,11 @@ just the handful a value-level unit test happens to assert on:
     construction (team_game.py's module docstring); this is the proof.
 """
 
-import numpy as np
 import pandas as pd
 import pytest
 from nbaforecast.features.team_game import FEATURE_COLUMNS, build_team_game_features
 
-N_TEAMS = 6
-_SEASONS = (("2022-23", 2022), ("2023-24", 2023))
-
-
-def _build_league() -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-    """A deterministic round-robin league: every team plays every other team home + away, each
-    of 2 seasons — enough games/teams/seasons to exercise rolling windows, season-to-date resets,
-    and head-to-head beyond what the small hand-picked T2.2 fixture covers.
-    """
-    rng = np.random.default_rng(42)
-    team_ids = list(range(1, N_TEAMS + 1))
-    teams = pd.DataFrame(
-        {
-            "team_id": team_ids,
-            "arena_lat": rng.uniform(25, 47, N_TEAMS),
-            "arena_lon": rng.uniform(-122, -71, N_TEAMS),
-        }
-    )
-
-    games_rows: list[dict[str, object]] = []
-    stats_rows: list[dict[str, object]] = []
-    game_counter = 0
-    for season, season_start_year in _SEASONS:
-        game_date = pd.Timestamp(f"{season_start_year}-10-20")
-        for home in team_ids:
-            for away in team_ids:
-                if home == away:
-                    continue
-                game_counter += 1
-                game_id = f"G{game_counter}"
-                game_date = game_date + pd.Timedelta(2, unit="D")
-                home_net = float(rng.normal(home - away, 5))
-                pace = float(rng.normal(98, 3))
-                games_rows.append(
-                    {
-                        "game_id": game_id,
-                        "season": season,
-                        "season_start_year": season_start_year,
-                        "game_date": game_date,
-                        "home_team_id": home,
-                        "away_team_id": away,
-                        "home_score": round(100 + home_net),
-                        "away_score": round(100 - home_net),
-                        "status": "final",
-                    }
-                )
-                stats_rows.append(
-                    {
-                        "game_id": game_id,
-                        "team_id": home,
-                        "opponent_team_id": away,
-                        "is_home": True,
-                        "off_rating": 110 + home_net / 2,
-                        "def_rating": 110 - home_net / 2,
-                        "net_rating": home_net,
-                        "pace": pace,
-                    }
-                )
-                stats_rows.append(
-                    {
-                        "game_id": game_id,
-                        "team_id": away,
-                        "opponent_team_id": home,
-                        "is_home": False,
-                        "off_rating": 110 - home_net / 2,
-                        "def_rating": 110 + home_net / 2,
-                        "net_rating": -home_net,
-                        "pace": pace,
-                    }
-                )
-    return pd.DataFrame(games_rows), pd.DataFrame(stats_rows), teams
+from tests.ml._synthetic_league import build_synthetic_league
 
 
 def _sample_game_ids(games: pd.DataFrame) -> list[str]:
@@ -101,7 +30,7 @@ def _sample_game_ids(games: pd.DataFrame) -> list[str]:
 
 @pytest.fixture(scope="module")
 def league() -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-    return _build_league()
+    return build_synthetic_league()
 
 
 @pytest.fixture(scope="module")

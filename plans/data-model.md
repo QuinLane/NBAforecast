@@ -151,11 +151,15 @@ use the naming convention **`roll{N}_{metric}`** (e.g., `roll10_net_rating`). Al
 `feature_version VARCHAR` and `created_at`.
 
 ### `features_team_game` — PK (game_id, team_id)
-`is_home, days_rest, is_back_to_back, games_last_7d, games_last_14d, travel_distance_km, tz_shift,
-roll5_net_rating, roll10_net_rating, roll5_off_rating, roll10_off_rating, roll5_def_rating,
-roll10_def_rating, roll5_pace, roll10_pace, season_off_rating, season_def_rating, season_net_rating,
-win_pct_to_date, elo, h2h_record, h2h_avg_margin, rest_advantage, rating_diff, elo_diff,
-team_orapm, team_drapm` (last two from RAPM snapshots). Index (team_id), (game_id).
+`opponent_team_id, season, season_start_year, game_date, is_home, days_rest, is_back_to_back,
+games_last_7d, games_last_14d, travel_distance_km, tz_shift, roll5_net_rating, roll10_net_rating,
+roll5_off_rating, roll10_off_rating, roll5_def_rating, roll10_def_rating, roll5_pace, roll10_pace,
+season_off_rating, season_def_rating, season_net_rating, season_pace, win_pct_to_date, elo,
+opp_adj_net_rating, h2h_record, h2h_avg_margin, rest_advantage, rating_diff, elo_diff, team_orapm,
+team_drapm` (last two from RAPM snapshots — **NULL until T3.9** wires RAPM into features). Index
+(team_id), (game_id), (season_start_year). Finalized in T2.3 against the implementation in
+`features/team_game.py` (T2.2) — this list supersedes feature-engineering.md §4's prose summary
+where the two differ (`opp_adj_net_rating`, `season_pace` were missing there).
 
 ### `features_player_game` — PK (game_id, player_id)
 `is_home, days_rest, is_back_to_back, roll5_pts, roll10_pts, roll15_pts, roll5_reb, roll10_reb,

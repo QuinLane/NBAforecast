@@ -1,7 +1,7 @@
-"""Assert the SQLAlchemy schema matches data-model.md §§2, 3, 5 exactly.
+"""Assert the SQLAlchemy schema matches data-model.md §§2, 3, 4, 5 exactly.
 
 This is the canonical guard for the data model: if a column, key, index, or constraint drifts
-from the doc, this fails. Gold ``features_*`` tables (§4) are intentionally absent until T2.3.
+from the doc, this fails.
 """
 
 from nbaforecast.storage import models  # noqa: F401  (registers tables)
@@ -168,6 +168,101 @@ _BUSINESS_COLUMNS: dict[str, set[str]] = {
         "win_prob",
     },
     "ingested_games": {"game_id", "entities_done", "ingested_at"},
+    "features_team_game": {
+        "game_id",
+        "team_id",
+        "opponent_team_id",
+        "season",
+        "season_start_year",
+        "game_date",
+        "is_home",
+        "days_rest",
+        "is_back_to_back",
+        "games_last_7d",
+        "games_last_14d",
+        "travel_distance_km",
+        "tz_shift",
+        "roll5_net_rating",
+        "roll10_net_rating",
+        "roll5_off_rating",
+        "roll10_off_rating",
+        "roll5_def_rating",
+        "roll10_def_rating",
+        "roll5_pace",
+        "roll10_pace",
+        "season_off_rating",
+        "season_def_rating",
+        "season_net_rating",
+        "season_pace",
+        "win_pct_to_date",
+        "elo",
+        "opp_adj_net_rating",
+        "h2h_record",
+        "h2h_avg_margin",
+        "rest_advantage",
+        "rating_diff",
+        "elo_diff",
+        "team_orapm",
+        "team_drapm",
+        "feature_version",
+    },
+    "features_player_game": {
+        "game_id",
+        "player_id",
+        "team_id",
+        "opponent_team_id",
+        "season",
+        "season_start_year",
+        "game_date",
+        "is_home",
+        "days_rest",
+        "is_back_to_back",
+        "roll5_pts",
+        "roll10_pts",
+        "roll15_pts",
+        "roll10_std_pts",
+        "roll5_reb",
+        "roll10_reb",
+        "roll15_reb",
+        "roll10_std_reb",
+        "roll5_ast",
+        "roll10_ast",
+        "roll15_ast",
+        "roll10_std_ast",
+        "roll5_fg3m",
+        "roll10_fg3m",
+        "roll15_fg3m",
+        "season_avg_pts",
+        "season_avg_reb",
+        "season_avg_ast",
+        "season_avg_fg3m",
+        "roll_minutes",
+        "usage_rate",
+        "minutes_trend",
+        "opp_def_rating",
+        "opp_pace",
+        "opp_pos_def",
+        "player_rapm",
+        "feature_version",
+    },
+    "features_game_state": {
+        "game_id",
+        "event_num",
+        "score_diff",
+        "seconds_remaining_game",
+        "period",
+        "is_clutch",
+        "offense_has_ball",
+        "possession_arrow",
+        "pre_game_win_prob",
+        "timeouts_remaining_home",
+        "timeouts_remaining_away",
+        "in_bonus",
+        "home_fouls",
+        "away_fouls",
+        "home_win",
+        "feature_version",
+    },
 }
 
 # created_at + updated_at on mutable rows; created_at only on append-only rows.
@@ -179,6 +274,9 @@ _CREATED_ONLY = {
     "player_rapm",
     "predictions",
     "live_win_prob_timeline",
+    "features_team_game",
+    "features_player_game",
+    "features_game_state",
 }
 
 _EXPECTED_PK: dict[str, tuple[str, ...]] = {
@@ -194,6 +292,9 @@ _EXPECTED_PK: dict[str, tuple[str, ...]] = {
     "predictions": ("prediction_id",),
     "live_win_prob_timeline": ("game_id", "event_num"),
     "ingested_games": ("game_id",),
+    "features_team_game": ("game_id", "team_id"),
+    "features_player_game": ("game_id", "player_id"),
+    "features_game_state": ("game_id", "event_num"),
 }
 
 # Index definitions expected (frozenset of columns per table), single + composite.
@@ -212,6 +313,17 @@ _EXPECTED_INDEX_COLS: dict[str, set[frozenset[str]]] = {
     "player_rapm": {frozenset({"player_id"}), frozenset({"as_of_date"})},
     "predictions": {frozenset({"game_id"})},
     "live_win_prob_timeline": {frozenset({"game_id"})},
+    "features_team_game": {
+        frozenset({"game_id"}),
+        frozenset({"team_id"}),
+        frozenset({"season_start_year"}),
+    },
+    "features_player_game": {
+        frozenset({"game_id"}),
+        frozenset({"player_id"}),
+        frozenset({"season_start_year"}),
+    },
+    "features_game_state": {frozenset({"game_id"})},
 }
 
 
@@ -262,6 +374,9 @@ def test_foreign_keys() -> None:
     assert ("player_id", "players") in fk_targets("shots")
     assert fk_targets("possessions") == {("game_id", "games")}
     assert fk_targets("player_rapm") == {("player_id", "players")}
+    assert fk_targets("features_team_game") == {("game_id", "games"), ("team_id", "teams")}
+    assert fk_targets("features_player_game") == {("game_id", "games"), ("player_id", "players")}
+    assert fk_targets("features_game_state") == {("game_id", "games")}
 
 
 def test_games_check_and_shots_unique() -> None:

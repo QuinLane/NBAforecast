@@ -6,12 +6,9 @@ and re-raises so the Prefect flow fails loudly.
 """
 
 import logging
-import math
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
 
-import numpy as np
 import pandas as pd
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -32,6 +29,7 @@ from nbaforecast.storage.repositories import (
     REPLACE_BY_GAME,
     UPSERT_KEYS,
     replace_game_rows,
+    to_db_records,
     upsert_rows,
 )
 
@@ -54,28 +52,6 @@ class LoadResult:
     table: str
     rows: int
     parquet_path: Path | None
-
-
-def _clean_value(value: Any) -> Any:
-    """Convert pandas/numpy scalars to DB-friendly Python types (NaN → None)."""
-    if value is None:
-        return None
-    if isinstance(value, np.integer):
-        return int(value)
-    if isinstance(value, np.bool_):
-        return bool(value)
-    if isinstance(value, float | np.floating):
-        if math.isnan(float(value)):
-            return None
-        return int(value) if float(value).is_integer() else float(value)
-    if isinstance(value, pd.Timestamp):
-        return value.to_pydatetime()
-    return value
-
-
-def _records(df: pd.DataFrame) -> list[dict[str, Any]]:
-    """DataFrame → list of DB row dicts with native Python types and NULLs."""
-    return [{str(k): _clean_value(v) for k, v in row.items()} for row in df.to_dict("records")]
 
 
 async def load_silver(
@@ -113,7 +89,7 @@ async def load_silver(
         logger.error("quarantined %s/%s: validation failed", source, endpoint)
         raise
 
-    rows = _records(df)
+    rows = to_db_records(df)
     if table in REPLACE_BY_GAME:
         if game_id is None:
             raise IngestionError(f"{table} load requires game_id for idempotent replace")

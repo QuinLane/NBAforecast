@@ -12,7 +12,9 @@ Conventions vs. the Postgres schema:
 - ``season_start_year`` is included on every table as the partition column, even where the silver
   Postgres table derives it via the ``games`` join.
 
-Gold ``features_*`` Parquet schemas (data-model §4) are added with T2.3.
+Gold ``features_*`` Parquet schemas (data-model §4), added in T2.3, follow the same conventions
+and live in :data:`GOLD_PARQUET_SCHEMAS` — kept separate from :data:`SILVER_PARQUET_SCHEMAS` so
+the silver-table-completeness test stays a precise guard on the silver layer alone.
 """
 
 import pyarrow as pa
@@ -177,6 +179,63 @@ SILVER_PARQUET_SCHEMAS: dict[str, pa.Schema] = {
     "play_by_play": PLAY_BY_PLAY_SCHEMA,
     "shots": SHOTS_SCHEMA,
     "possessions": POSSESSIONS_SCHEMA,
+}
+
+FEATURES_TEAM_GAME_SCHEMA = pa.schema(
+    [
+        pa.field("game_id", pa.string(), nullable=False),
+        pa.field("team_id", pa.int64(), nullable=False),
+        _SEASON_PARTITION,
+        pa.field("opponent_team_id", pa.int64(), nullable=False),
+        pa.field("season", pa.string(), nullable=False),
+        pa.field("game_date", pa.date32(), nullable=False),
+        pa.field("is_home", pa.bool_(), nullable=False),
+        pa.field("days_rest", pa.float64()),
+        pa.field("is_back_to_back", pa.float64()),
+        pa.field("games_last_7d", pa.int32()),
+        pa.field("games_last_14d", pa.int32()),
+        pa.field("travel_distance_km", pa.float64()),
+        pa.field("tz_shift", pa.float64()),
+        *[
+            pa.field(c, pa.float64())
+            for c in (
+                "roll5_net_rating",
+                "roll10_net_rating",
+                "roll5_off_rating",
+                "roll10_off_rating",
+                "roll5_def_rating",
+                "roll10_def_rating",
+                "roll5_pace",
+                "roll10_pace",
+                "season_off_rating",
+                "season_def_rating",
+                "season_net_rating",
+                "season_pace",
+                "win_pct_to_date",
+            )
+        ],
+        pa.field("elo", pa.float64(), nullable=False),
+        *[
+            pa.field(c, pa.float64())
+            for c in (
+                "opp_adj_net_rating",
+                "h2h_record",
+                "h2h_avg_margin",
+                "rest_advantage",
+                "rating_diff",
+                "elo_diff",
+                "team_orapm",
+                "team_drapm",
+            )
+        ],
+        pa.field("feature_version", pa.string(), nullable=False),
+    ]
+)
+
+# Gold table name → schema. Populated incrementally as builders land (features_team_game now,
+# features_player_game/features_game_state once T3.2/T4.1 ship).
+GOLD_PARQUET_SCHEMAS: dict[str, pa.Schema] = {
+    "features_team_game": FEATURES_TEAM_GAME_SCHEMA,
 }
 
 PARTITION_COLUMN = "season_start_year"

@@ -24,19 +24,22 @@ def write_parquet(
     season_start_year: int,
     partition_key: str,
     root: str | None = None,
+    schema: pa.Schema | None = None,
 ) -> Path:
     """Write ``df`` to the Parquet partition for ``season_start_year`` and return the file path.
 
     Args:
-        table: Silver table name (must have a registered pyarrow schema).
-        df: Rows to write (silver columns; the partition column is added here).
+        table: Table name — looked up in ``SILVER_PARQUET_SCHEMAS`` unless ``schema`` is given.
+        df: Rows to write (the partition column is added here).
         season_start_year: Partition value.
         partition_key: Deterministic part-file identifier (e.g. ``game_id``) for idempotency.
         root: Override the configured ``parquet_root`` (used in tests).
+        schema: Explicit pyarrow schema (e.g. from ``GOLD_PARQUET_SCHEMAS``) — required for any
+            table not in ``SILVER_PARQUET_SCHEMAS``.
     """
     # The partition column lives in the hive directory name, not in the file, so reads via the
     # dataset API reconstruct it without a type clash against the in-file column.
-    schema = SILVER_PARQUET_SCHEMAS[table]
+    schema = schema or SILVER_PARQUET_SCHEMAS[table]
     file_fields = [f for f in schema if f.name != PARTITION_COLUMN]
     file_schema = pa.schema(file_fields)
     names = [f.name for f in file_fields]

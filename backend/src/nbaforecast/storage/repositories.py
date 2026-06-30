@@ -55,12 +55,30 @@ def to_db_records(df: pd.DataFrame) -> list[dict[str, Any]]:
 
 
 async def load_table_as_dataframe(session: AsyncSession, model: type[Base]) -> pd.DataFrame:
-    """Read every row of ``model`` into a DataFrame (one-off script / batch-job use, not request
-    serving). Selects the underlying ``Table`` directly so the result is plain columns, not ORM
-    instances.
+    """Read every row of ``model`` into a DataFrame. Selects the underlying ``Table`` directly so
+    the result is plain columns, not ORM instances.
+
+    Used for both batch jobs (``features/flows.py``'s nightly refresh) and, for now, the games
+    prediction request path (``api/services/games.py``) — a full-table load per request doesn't
+    scale to production data volumes and should be replaced by a narrower query or a feature
+    cache before launch; M2's vertical slice is about correctness first.
+
+    ``Numeric``/``DECIMAL`` columns come back from the DBAPI as ``decimal.Decimal`` (an
+    object-dtype column, with plain Python ``None`` for ``NULL`` rather than ``NaN``) — every
+    primitive/feature function downstream assumes ordinary float64 + ``NaN`` semantics, so those
+    columns are coerced here rather than at every call site.
     """
     rows = (await session.execute(select(model.__table__))).mappings().all()
-    return pd.DataFrame(rows)
+    return _coerce_decimal_columns(pd.DataFrame(rows))
+
+
+def _coerce_decimal_columns(df: pd.DataFrame) -> pd.DataFrame:
+    for column in df.select_dtypes(include="object").columns:
+        try:
+            df[column] = pd.to_numeric(df[column])
+        except (TypeError, ValueError):
+            continue  # genuinely non-numeric (strings, dates) — leave as-is
+    return df
 
 
 async def upsert_rows(

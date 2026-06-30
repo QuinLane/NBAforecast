@@ -70,6 +70,9 @@ dev = [
     "pytest-cov>=5.0.0",
     "ruff>=0.5.0",
     "mypy>=1.10.0",
+    # API contract tests (tests/api/) seed an in-memory async SQLite DB instead of needing a
+    # live Postgres — no DB-specific (ARRAY/JSONB) columns are exercised by that slice.
+    "aiosqlite>=0.22.1",
     # type stubs
     "types-redis>=4.6.0",
     "pandas-stubs>=2.2.0",

@@ -4,6 +4,7 @@ from typing import Any
 
 import pandas as pd
 import pytest
+from nbaforecast.explain.schema import Explanation, ExplanationUnits
 from nbaforecast.models.base import ModelHead, TrainResult
 
 
@@ -48,8 +49,14 @@ class MeanPredictorHead(ModelHead[float]):
     def predict(self, model: Any, features: pd.DataFrame) -> pd.Series:
         return pd.Series([model["mean"]] * len(features), index=features.index)
 
-    def explain(self, model: Any, features: pd.DataFrame) -> dict[str, Any]:
-        return {"baseline": model["mean"], "contributions": {}}
+    def explain(self, model: Any, features: pd.DataFrame) -> Explanation:
+        return Explanation(
+            baseline=model["mean"],
+            prediction=model["mean"],
+            contributions=[],
+            units=ExplanationUnits.POINTS,
+            notes="",
+        )
 
 
 def test_concrete_head_train_does_not_mutate_self() -> None:
@@ -77,9 +84,9 @@ def test_concrete_head_predict_uses_passed_in_model_not_shared_state() -> None:
     assert head.predict(result_b.model, features).iloc[0] == 100.0
 
 
-def test_explain_returns_dict_with_baseline_and_contributions() -> None:
+def test_explain_returns_explanation_with_baseline_and_contributions() -> None:
     head = MeanPredictorHead()
     result = head.train(pd.DataFrame({"x": [1]}), pd.Series([5.0]))
     explanation = head.explain(result.model, pd.DataFrame({"x": [1]}))
-    assert explanation["baseline"] == 5.0
-    assert "contributions" in explanation
+    assert explanation.baseline == 5.0
+    assert explanation.contributions == []

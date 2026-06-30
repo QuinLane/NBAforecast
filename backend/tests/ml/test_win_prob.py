@@ -9,6 +9,7 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
+import pytest
 from nbaforecast.features.team_game import build_team_game_features
 from nbaforecast.models.game_prediction.win_prob import (
     MODEL_FEATURE_COLUMNS,
@@ -51,8 +52,26 @@ def test_logistic_explain_returns_a_coefficient_per_feature() -> None:
     features, labels = _features_and_labels()
     head = LogisticWinProbHead()
     result = head.train(features, labels)
-    explanation = head.explain(result.model, features)
-    assert set(explanation["contributions"]) == set(MODEL_FEATURE_COLUMNS)
+    explanation = head.explain(result.model, features.iloc[[0]])
+    assert {c.feature for c in explanation.contributions} == set(MODEL_FEATURE_COLUMNS)
+
+
+def test_logistic_explain_contributions_sorted_by_magnitude() -> None:
+    features, labels = _features_and_labels()
+    head = LogisticWinProbHead()
+    result = head.train(features, labels)
+    explanation = head.explain(result.model, features.iloc[[0]])
+    magnitudes = [abs(c.contribution) for c in explanation.contributions]
+    assert magnitudes == sorted(magnitudes, reverse=True)
+
+
+def test_logistic_explain_is_additive() -> None:
+    features, labels = _features_and_labels()
+    head = LogisticWinProbHead()
+    result = head.train(features, labels)
+    explanation = head.explain(result.model, features.iloc[[0]])
+    total = sum(c.contribution for c in explanation.contributions)
+    assert total == pytest.approx(explanation.prediction - explanation.baseline)
 
 
 # ── LightGBMWinProbHead ──────────────────────────────────────────────────────────────────────────
@@ -73,12 +92,39 @@ def test_lightgbm_predictions_are_valid_probabilities() -> None:
     assert predictions.between(0, 1).all()
 
 
-def test_lightgbm_explain_returns_an_importance_per_feature() -> None:
+def test_lightgbm_explain_returns_a_contribution_per_feature() -> None:
     features, labels = _features_and_labels()
     head = LightGBMWinProbHead()
     result = head.train(features, labels)
-    explanation = head.explain(result.model, features)
-    assert set(explanation["contributions"]) == set(MODEL_FEATURE_COLUMNS)
+    explanation = head.explain(result.model, features.iloc[[0]])
+    assert {c.feature for c in explanation.contributions} == set(MODEL_FEATURE_COLUMNS)
+
+
+def test_lightgbm_explain_contributions_sorted_by_magnitude() -> None:
+    features, labels = _features_and_labels()
+    head = LightGBMWinProbHead()
+    result = head.train(features, labels)
+    explanation = head.explain(result.model, features.iloc[[0]])
+    magnitudes = [abs(c.contribution) for c in explanation.contributions]
+    assert magnitudes == sorted(magnitudes, reverse=True)
+
+
+def test_lightgbm_explain_is_additive() -> None:
+    features, labels = _features_and_labels()
+    head = LightGBMWinProbHead()
+    result = head.train(features, labels)
+    explanation = head.explain(result.model, features.iloc[[0]])
+    total = sum(c.contribution for c in explanation.contributions)
+    assert total == pytest.approx(explanation.prediction - explanation.baseline, abs=1e-9)
+
+
+def test_lightgbm_explain_prediction_matches_uncalibrated_predict() -> None:
+    features, labels = _features_and_labels()
+    head = LightGBMWinProbHead()
+    result = head.train(features, labels)
+    explanation = head.explain(result.model, features.iloc[[0]])
+    predicted = head.predict(result.model, features.iloc[[0]]).iloc[0]
+    assert explanation.prediction == pytest.approx(predicted)
 
 
 def test_lightgbm_calibrator_is_actually_consulted_at_predict_time() -> None:

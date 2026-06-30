@@ -17,6 +17,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
+from nbaforecast.explain.schema import Explanation
 from nbaforecast.features.team_game import FEATURE_COLUMNS
 from nbaforecast.models.base import ModelHead, TrainResult
 
@@ -28,7 +29,12 @@ GAME_WIN_FEATURE_VERSION = "game_win_v1"
 MODEL_FEATURE_COLUMNS: tuple[str, ...] = (*FEATURE_COLUMNS, "is_home")
 
 
-def _design_matrix(features: pd.DataFrame) -> pd.DataFrame:
+def design_matrix(features: pd.DataFrame) -> pd.DataFrame:
+    """Select + cast ``MODEL_FEATURE_COLUMNS`` from a ``features_team_game`` row.
+
+    Public (not module-private) because ``explain/explainers.py`` needs the exact same column
+    selection/casting to align TreeSHAP/coefficient explanations with what the model actually saw.
+    """
     matrix = features[list(MODEL_FEATURE_COLUMNS)].copy()
     matrix["is_home"] = matrix["is_home"].astype(float)
     return matrix
@@ -55,7 +61,7 @@ class LogisticWinProbHead(ModelHead[pd.Series]):
         return ("features_team_game",)
 
     def train(self, features: pd.DataFrame, labels: pd.Series) -> TrainResult:
-        design = _design_matrix(features)
+        design = design_matrix(features)
         pipeline = make_pipeline(
             SimpleImputer(strategy="median"),
             StandardScaler(),
@@ -65,13 +71,15 @@ class LogisticWinProbHead(ModelHead[pd.Series]):
         return TrainResult(model=pipeline, metrics={}, feature_version=GAME_WIN_FEATURE_VERSION)
 
     def predict(self, model: Any, features: pd.DataFrame) -> pd.Series:
-        probs = model.predict_proba(_design_matrix(features))[:, 1]
+        probs = model.predict_proba(design_matrix(features))[:, 1]
         return pd.Series(probs, index=features.index, name="prediction")
 
-    def explain(self, model: Any, features: pd.DataFrame) -> dict[str, Any]:
-        logistic = model.named_steps["logisticregression"]
-        coefficients = dict(zip(MODEL_FEATURE_COLUMNS, logistic.coef_[0].tolist(), strict=True))
-        return {"contributions": coefficients}
+    def explain(self, model: Any, features: pd.DataFrame) -> Explanation:
+        # Deferred import: explain.explainers imports design_matrix from this module, so a
+        # module-level import here would be circular.
+        from nbaforecast.explain.explainers import explain_linear_classifier
+
+        return explain_linear_classifier(model, features)
 
 
 class LightGBMWinProbHead(ModelHead[pd.Series]):
@@ -131,11 +139,11 @@ class LightGBMWinProbHead(ModelHead[pd.Series]):
             fit_index, calib_index = ordered.index, pd.Index([])
 
         booster = lgb.LGBMClassifier(**self._lgbm_params)
-        booster.fit(_design_matrix(features.loc[fit_index]), labels.loc[fit_index])
+        booster.fit(design_matrix(features.loc[fit_index]), labels.loc[fit_index])
 
         calibrator: IsotonicRegression | None = None
         if len(calib_index) > 0:
-            raw_calib_probs = booster.predict_proba(_design_matrix(features.loc[calib_index]))[:, 1]
+            raw_calib_probs = booster.predict_proba(design_matrix(features.loc[calib_index]))[:, 1]
             calibrator = IsotonicRegression(out_of_bounds="clip")
             calibrator.fit(raw_calib_probs, labels.loc[calib_index])
 
@@ -146,17 +154,21 @@ class LightGBMWinProbHead(ModelHead[pd.Series]):
         )
 
     def predict(self, model: Any, features: pd.DataFrame) -> pd.Series:
-        raw_probs = model["booster"].predict_proba(_design_matrix(features))[:, 1]
+        raw_probs = model["booster"].predict_proba(design_matrix(features))[:, 1]
         if model["calibrator"] is not None:
             raw_probs = model["calibrator"].predict(raw_probs)
         return pd.Series(raw_probs, index=features.index, name="prediction")
 
-    def explain(self, model: Any, features: pd.DataFrame) -> dict[str, Any]:
-        importances = dict(
-            zip(
-                MODEL_FEATURE_COLUMNS,
-                model["booster"].feature_importances_.tolist(),
-                strict=True,
-            )
-        )
-        return {"contributions": importances}
+    def explain(self, model: Any, features: pd.DataFrame) -> Explanation:
+        """TreeSHAP explanation of the raw booster's output.
+
+        If calibration is active, the served prediction (``predict()``) passes the booster's raw
+        probability through the isotonic calibrator afterward — a non-parametric step function
+        that isn't itself feature-attributable, so this explanation's ``prediction`` reflects the
+        *uncalibrated* booster output and may differ slightly from what was actually served.
+        """
+        # Deferred import: explain.explainers imports design_matrix from this module, so a
+        # module-level import here would be circular.
+        from nbaforecast.explain.explainers import explain_lightgbm_classifier
+
+        return explain_lightgbm_classifier(model, features)

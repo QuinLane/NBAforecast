@@ -11,6 +11,7 @@ from typing import Any
 
 import pandas as pd
 import pytest
+from nbaforecast.explain.schema import Explanation, ExplanationUnits
 from nbaforecast.models.base import ModelHead, TrainResult
 from nbaforecast.training import registry
 
@@ -30,8 +31,10 @@ class _DummyHead(ModelHead[float]):
     def predict(self, model: Any, features: pd.DataFrame) -> float:
         return model["value"]
 
-    def explain(self, model: Any, features: pd.DataFrame) -> dict[str, Any]:
-        return {}
+    def explain(self, model: Any, features: pd.DataFrame) -> Explanation:
+        return Explanation(
+            baseline=0.0, prediction=0.0, contributions=[], units=ExplanationUnits.POINTS, notes=""
+        )
 
 
 @pytest.fixture(autouse=True)

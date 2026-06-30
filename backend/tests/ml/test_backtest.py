@@ -11,6 +11,7 @@ from typing import Any
 
 import pandas as pd
 import pytest
+from nbaforecast.explain.schema import Explanation, ExplanationUnits
 from nbaforecast.models.base import ModelHead, TrainResult
 from nbaforecast.training.backtest import Fold, make_folds, run_backtest
 
@@ -83,8 +84,14 @@ class _ConstantHead(ModelHead[float]):
     def predict(self, model: Any, features: pd.DataFrame) -> pd.Series:
         return pd.Series([model["value"]] * len(features), index=features.index)
 
-    def explain(self, model: Any, features: pd.DataFrame) -> dict[str, Any]:
-        return {}
+    def explain(self, model: Any, features: pd.DataFrame) -> Explanation:
+        return Explanation(
+            baseline=model["value"],
+            prediction=model["value"],
+            contributions=[],
+            units=ExplanationUnits.POINTS,
+            notes="",
+        )
 
 
 def _toy_features_and_labels() -> tuple[pd.DataFrame, pd.Series]:

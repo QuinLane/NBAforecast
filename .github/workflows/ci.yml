@@ -67,7 +67,13 @@ jobs:
         run: uv run mypy src
 
       - name: pytest
-        run: uv run pytest tests/ -v --tb=short
+        # Exit code 5 = "no tests collected" (e.g. a milestone before its tests land); not a failure.
+        run: |
+          set +e
+          uv run pytest tests/ -v --tb=short
+          code=$?
+          if [ "$code" -eq 5 ]; then echo "::notice::no tests collected"; exit 0; fi
+          exit "$code"
         env:
           NBAF_POSTGRES_URL: postgresql+asyncpg://postgres:test@localhost:5432/nbaforecast_test
           NBAF_REDIS_URL: redis://localhost:6379/0
@@ -88,7 +94,7 @@ jobs:
 
       - uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda  # v4.1.0
         with:
-          version: 9
+          version: 10
 
       - name: Set up Node 20
         uses: actions/setup-node@v4

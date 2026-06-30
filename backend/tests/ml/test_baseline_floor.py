@@ -22,16 +22,9 @@ from nbaforecast.features.team_game import build_team_game_features
 from nbaforecast.models.game_prediction.baseline import EloWinProbHead, HomeAlwaysWinsHead
 from nbaforecast.models.game_prediction.win_prob import LightGBMWinProbHead, LogisticWinProbHead
 from nbaforecast.training.backtest import run_backtest
+from nbaforecast.training.metrics import classification_metrics
 
 from tests.ml._synthetic_league import DEFAULT_N_TEAMS, DEFAULT_SEASONS, build_synthetic_league
-
-
-def _log_loss(predictions: pd.Series, actuals: pd.Series) -> dict[str, float]:
-    """Minimal binary log-loss — temporary until training/metrics.py (T2.9) lands."""
-    eps = 1e-15
-    clipped = predictions.clip(eps, 1 - eps)
-    loss = -(actuals * np.log(clipped) + (1 - actuals) * np.log(1 - clipped)).mean()
-    return {"log_loss": float(loss)}
 
 
 def _features_and_labels(
@@ -95,8 +88,8 @@ def test_elo_baseline_evenly_matched_at_a_neutral_site_is_fifty_fifty() -> None:
 def test_elo_baseline_beats_home_always_wins_floor() -> None:
     features, labels = _features_and_labels()
 
-    elo_result = run_backtest(EloWinProbHead(), features, labels, _log_loss)
-    home_result = run_backtest(HomeAlwaysWinsHead(), features, labels, _log_loss)
+    elo_result = run_backtest(EloWinProbHead(), features, labels, classification_metrics)
+    home_result = run_backtest(HomeAlwaysWinsHead(), features, labels, classification_metrics)
 
     elo_log_loss = float(np.mean([m["log_loss"] for m in elo_result.fold_metrics]))
     home_log_loss = float(np.mean([m["log_loss"] for m in home_result.fold_metrics]))
@@ -114,9 +107,9 @@ def test_game_win_head_beats_the_elo_floor() -> None:
     seasons = tuple((f"{y}-{(y + 1) % 100:02d}", y) for y in range(2012, 2024))
     features, labels = _features_and_labels(n_teams=14, seasons=seasons)
 
-    elo_result = run_backtest(EloWinProbHead(), features, labels, _log_loss)
-    logistic_result = run_backtest(LogisticWinProbHead(), features, labels, _log_loss)
-    lgbm_result = run_backtest(LightGBMWinProbHead(), features, labels, _log_loss)
+    elo_result = run_backtest(EloWinProbHead(), features, labels, classification_metrics)
+    logistic_result = run_backtest(LogisticWinProbHead(), features, labels, classification_metrics)
+    lgbm_result = run_backtest(LightGBMWinProbHead(), features, labels, classification_metrics)
 
     elo_log_loss = float(np.mean([m["log_loss"] for m in elo_result.fold_metrics]))
     logistic_log_loss = float(np.mean([m["log_loss"] for m in logistic_result.fold_metrics]))

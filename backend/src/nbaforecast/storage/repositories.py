@@ -43,7 +43,7 @@ def clean_db_value(value: Any) -> Any:
     if isinstance(value, float | np.floating):
         if math.isnan(float(value)):
             return None
-        return int(value) if float(value).is_integer() else float(value)
+        return float(value)
     if isinstance(value, pd.Timestamp):
         return value.to_pydatetime()
     return value
@@ -74,10 +74,16 @@ async def load_table_as_dataframe(session: AsyncSession, model: type[Base]) -> p
 
 def _coerce_decimal_columns(df: pd.DataFrame) -> pd.DataFrame:
     for column in df.select_dtypes(include="object").columns:
+        sample = df[column].dropna()
+        if sample.empty or isinstance(sample.iloc[0], str):
+            # Plain Python strings (game_id, status, abbreviation …) are never Decimal —
+            # skip them so that leading-zero IDs like "0022300001" aren't silently truncated
+            # to the integer 22300001, which would break every downstream string equality filter.
+            continue
         try:
             df[column] = pd.to_numeric(df[column])
         except (TypeError, ValueError):
-            continue  # genuinely non-numeric (strings, dates) — leave as-is
+            continue
     return df
 
 

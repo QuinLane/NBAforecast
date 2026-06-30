@@ -33,7 +33,7 @@ CHAMPION_POLL_SECONDS = 60.0
 async def _poll_for_new_champions(provider: ModelProvider) -> None:
     while True:
         await asyncio.sleep(CHAMPION_POLL_SECONDS)
-        provider.load_all()
+        await asyncio.to_thread(provider.load_all)
 
 
 @asynccontextmanager

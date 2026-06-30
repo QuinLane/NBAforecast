@@ -32,5 +32,6 @@ export function useGamePredictionFullExplanation(gameId: string) {
         throw new Error(`Full explanation for game ${gameId} not found`);
       return data;
     },
+    enabled: !!gameId,
   });
 }

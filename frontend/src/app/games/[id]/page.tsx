@@ -63,7 +63,7 @@ export default function GameDetailPage({
               <div className="text-xs text-zinc-600 mt-1">{game.game_date}</div>
               <div
                 className={`text-xs mt-1 px-2 py-0.5 rounded-full ${
-                  game.status === "Final"
+                  game.status === "final"
                     ? "bg-zinc-700 text-zinc-400"
                     : "bg-emerald-900/40 text-emerald-400"
                 }`}

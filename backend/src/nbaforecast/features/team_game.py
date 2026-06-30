@@ -170,14 +170,16 @@ def _scheduled_team_rows(games: pd.DataFrame, teams: pd.DataFrame, as_of: date) 
         "loc_lat",
         "loc_lon",
     ]
-    home = slate[common].rename(
-        columns={"home_team_id": "team_id", "away_team_id": "opponent_team_id"}
+    home = (
+        slate[common]
+        .rename(columns={"home_team_id": "team_id", "away_team_id": "opponent_team_id"})
+        .assign(is_home=True)
     )
-    home["is_home"] = True
-    away = slate[common].rename(
-        columns={"away_team_id": "team_id", "home_team_id": "opponent_team_id"}
+    away = (
+        slate[common]
+        .rename(columns={"away_team_id": "team_id", "home_team_id": "opponent_team_id"})
+        .assign(is_home=False)
     )
-    away["is_home"] = False
     return pd.concat([home, away], ignore_index=True)
 
 
@@ -287,7 +289,7 @@ def _compute_elo(games: pd.DataFrame) -> tuple[pd.DataFrame, dict[int, float]]:
         home_won = 1.0 if home_score > away_score else 0.0
         margin = abs(home_score - away_score)
         elo_diff_winner = (home_elo - away_elo) if home_won else (away_elo - home_elo)
-        mov_multiplier = math.log(margin + 1) * (2.2 / ((elo_diff_winner * 0.001) + 2.2))
+        mov_multiplier = math.log(margin + 1) * (2.2 / (max(0.0, elo_diff_winner) * 0.001 + 2.2))
         delta = ELO_K * mov_multiplier * (home_won - expected_home)
 
         rating[home_id] = home_elo + delta

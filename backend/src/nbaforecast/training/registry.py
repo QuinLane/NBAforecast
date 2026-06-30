@@ -175,8 +175,10 @@ def promote_if_better(
                 )
                 return False
 
-    client.set_tag(champion.info.run_id, CHAMPION_TAG, "false")
+    # Promote first so a failure between the two calls leaves two champions (safely degenerate)
+    # rather than zero champions (every prediction request becomes a 503).
     client.set_tag(challenger_run_id, CHAMPION_TAG, "true")
+    client.set_tag(champion.info.run_id, CHAMPION_TAG, "false")
     logger.info(
         "promoted %s to champion for %s (was %s)",
         challenger_run_id,

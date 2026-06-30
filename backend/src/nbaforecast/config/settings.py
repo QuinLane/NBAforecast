@@ -45,6 +45,8 @@ class Settings(BaseSettings):
     )
     # Local cache directory pbpstats writes raw responses into.
     pbpstats_cache_dir: str = "data/pbpstats_cache"
+    # Root of the silver Parquet analytical store (partitioned by season_start_year).
+    parquet_root: str = "data/silver"
 
     # ── App ───────────────────────────────────────────────────────────────
     env: Literal["development", "test", "production"] = "development"

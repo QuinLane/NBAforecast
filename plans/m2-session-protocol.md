@@ -56,7 +56,7 @@ Update this table as tasks land. PR column filled in once opened.
 
 | Task | Description | Status | Branch / PR |
 |------|-------------|--------|--------------|
-| T2.1 | Leakage-safe feature primitives | not started | — |
+| T2.1 | Leakage-safe feature primitives | done | [#16](https://github.com/QuinLane/NBAforecast/pull/16) |
 | T2.2 | Team–game features + Elo | not started | — |
 | T2.3 | Feature materialization + refresh | not started | — |
 | T2.4 | No-leakage + train/serve parity tests | not started | — |

@@ -1,8 +1,8 @@
 """Alembic round-trip against a real Postgres (skipped when no DB is reachable).
 
-Runs ``alembic upgrade head`` → asserts every data-model §§2,3,5 table exists with its primary
+Runs ``alembic upgrade head`` → asserts every data-model §§2,3,4,5 table exists with its primary
 key → ``downgrade base`` removes them → re-upgrades so the DB is left at head for other tests.
-This is the live proof of the T1.1 definition of done; offline structural checks live in
+This is the live proof of the T1.1/T2.3 definition of done; offline structural checks live in
 ``tests/unit/test_schema.py``.
 """
 
@@ -31,6 +31,9 @@ EXPECTED_TABLES = {
     "predictions": ["prediction_id"],
     "live_win_prob_timeline": ["game_id", "event_num"],
     "ingested_games": ["game_id"],
+    "features_team_game": ["game_id", "team_id"],
+    "features_player_game": ["game_id", "player_id"],
+    "features_game_state": ["game_id", "event_num"],
 }
 
 

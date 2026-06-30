@@ -9,7 +9,8 @@ from typing import Any
 import pandas as pd
 import pytest
 from nbaforecast.errors import DataValidationError
-from nbaforecast.ingestion.load import _records, load_silver
+from nbaforecast.ingestion.load import load_silver
+from nbaforecast.storage.repositories import to_db_records
 
 
 class FakeSession:
@@ -52,7 +53,7 @@ def _valid_games_df() -> pd.DataFrame:
 
 def test_records_converts_nan_and_numpy_to_python() -> None:
     df = pd.DataFrame([{"a": 1, "b": None, "c": 2.5}])  # b -> NaN via float column
-    records = _records(df)
+    records = to_db_records(df)
     assert records[0]["a"] == 1
     assert isinstance(records[0]["a"], int)
     assert records[0]["b"] is None

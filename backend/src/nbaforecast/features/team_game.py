@@ -57,14 +57,14 @@ FEATURE_COLUMNS = [
     "roll10_def_rating",
     "roll5_pace",
     "roll10_pace",
-    "std_off_rating",
-    "std_def_rating",
-    "std_net_rating",
-    "std_pace",
-    "std_win_pct",
+    "season_off_rating",
+    "season_def_rating",
+    "season_net_rating",
+    "season_pace",
+    "win_pct_to_date",
     "elo",
     "opp_adj_net_rating",
-    "h2h_win_pct",
+    "h2h_record",
     "h2h_avg_margin",
     "rest_advantage",
     "rating_diff",
@@ -246,14 +246,14 @@ def _attach_recent_form(df: pd.DataFrame) -> pd.DataFrame:
 
 def _attach_season_to_date(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
-    for metric, alias in (
-        ("net_rating", "net_rating"),
-        ("off_rating", "off_rating"),
-        ("def_rating", "def_rating"),
-        ("pace", "pace"),
-        ("win", "win_pct"),
+    for metric, column in (
+        ("net_rating", "season_net_rating"),
+        ("off_rating", "season_off_rating"),
+        ("def_rating", "season_def_rating"),
+        ("pace", "season_pace"),
+        ("win", "win_pct_to_date"),
     ):
-        df[f"std_{alias}"] = _expanding_as_of(df, ["team_id", "season"], metric, "game_date")
+        df[column] = _expanding_as_of(df, ["team_id", "season"], metric, "game_date")
     return df
 
 
@@ -310,12 +310,12 @@ def _attach_elo(df: pd.DataFrame, games: pd.DataFrame) -> pd.DataFrame:
 
 
 def _attach_opponent_columns(df: pd.DataFrame) -> pd.DataFrame:
-    """Pull each row's *specific* opponent's days_rest/std_net_rating/elo for this matchup."""
-    opp = df[["game_id", "team_id", "days_rest", "std_net_rating", "elo"]].rename(
+    """Pull each row's *specific* opponent's days_rest/season_net_rating/elo for this matchup."""
+    opp = df[["game_id", "team_id", "days_rest", "season_net_rating", "elo"]].rename(
         columns={
             "team_id": "opponent_team_id",
             "days_rest": "opp_days_rest",
-            "std_net_rating": "opp_std_net_rating",
+            "season_net_rating": "opp_season_net_rating",
             "elo": "opp_elo",
         }
     )
@@ -325,7 +325,7 @@ def _attach_opponent_columns(df: pd.DataFrame) -> pd.DataFrame:
 def _attach_matchup(df: pd.DataFrame) -> pd.DataFrame:
     """Head-to-head record/margin vs tonight's specific opponent, prior meetings only."""
     df = df.copy()
-    df["h2h_win_pct"] = _expanding_as_of(df, ["team_id", "opponent_team_id"], "win", "game_date")
+    df["h2h_record"] = _expanding_as_of(df, ["team_id", "opponent_team_id"], "win", "game_date")
     df["h2h_avg_margin"] = _expanding_as_of(
         df, ["team_id", "opponent_team_id"], "margin", "game_date"
     )
@@ -340,8 +340,8 @@ def _attach_opponent_adjusted_rating(df: pd.DataFrame) -> pd.DataFrame:
     so it never includes tonight's opponent) and subtracted from the team's own rating.
     """
     df = df.copy()
-    opp_strength_to_date = _expanding_as_of(df, "team_id", "opp_std_net_rating", "game_date")
-    df["opp_adj_net_rating"] = df["std_net_rating"] - opp_strength_to_date
+    opp_strength_to_date = _expanding_as_of(df, "team_id", "opp_season_net_rating", "game_date")
+    df["opp_adj_net_rating"] = df["season_net_rating"] - opp_strength_to_date
     return df
 
 
@@ -349,6 +349,6 @@ def _attach_differentials(df: pd.DataFrame) -> pd.DataFrame:
     """Home/away-agnostic differentials, always expressed as this row's team minus opponent."""
     df = df.copy()
     df["rest_advantage"] = df["days_rest"] - df["opp_days_rest"]
-    df["rating_diff"] = df["std_net_rating"] - df["opp_std_net_rating"]
+    df["rating_diff"] = df["season_net_rating"] - df["opp_season_net_rating"]
     df["elo_diff"] = df["elo"] - df["opp_elo"]
     return df

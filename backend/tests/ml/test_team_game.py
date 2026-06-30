@@ -108,8 +108,8 @@ def test_first_ever_game_has_nan_history_features_and_initial_elo() -> None:
 
     assert np.isnan(g1_a["days_rest"])
     assert np.isnan(g1_a["roll5_net_rating"])
-    assert np.isnan(g1_a["std_net_rating"])
-    assert np.isnan(g1_a["h2h_win_pct"])
+    assert np.isnan(g1_a["season_net_rating"])
+    assert np.isnan(g1_a["h2h_record"])
     assert g1_a["elo"] == INITIAL_ELO
 
 
@@ -160,10 +160,10 @@ def test_season_to_date_resets_at_season_boundary() -> None:
     out = build_team_game_features(_games(), _team_game_stats(), _teams())
 
     g4_a = _row(out, "G4", TEAM_A)  # 4th game of season 2023-24
-    assert g4_a["std_net_rating"] == pytest.approx((15.0 + 15.0 + 30.0) / 3)
+    assert g4_a["season_net_rating"] == pytest.approx((15.0 + 15.0 + 30.0) / 3)
 
     g5_a = _row(out, "G5", TEAM_A)  # 1st game of season 2024-25 — resets despite 4 prior games
-    assert np.isnan(g5_a["std_net_rating"])
+    assert np.isnan(g5_a["season_net_rating"])
 
 
 # ── Elo ──────────────────────────────────────────────────────────────────────────────────────
@@ -188,14 +188,14 @@ def test_head_to_head_tracks_only_meetings_vs_that_specific_opponent() -> None:
 
     # Team A enters G5 (3rd meeting vs B) having won both prior meetings (G1, G2).
     g5_a = _row(out, "G5", TEAM_A)
-    assert g5_a["h2h_win_pct"] == 1.0
+    assert g5_a["h2h_record"] == 1.0
     g5_b = _row(out, "G5", TEAM_B)
-    assert g5_b["h2h_win_pct"] == 0.0
+    assert g5_b["h2h_record"] == 0.0
 
     # G4 is team A's *first* meeting with team C — no prior head-to-head history yet, despite A
     # having played plenty of games against team B by then.
     g4_a = _row(out, "G4", TEAM_A)
-    assert np.isnan(g4_a["h2h_win_pct"])
+    assert np.isnan(g4_a["h2h_record"])
 
 
 # ── Differentials ────────────────────────────────────────────────────────────────────────────
@@ -223,7 +223,7 @@ def test_serving_builds_only_the_requested_slate_from_completed_history() -> Non
 
     tonight_a = _row(out, "G7", TEAM_A)
     assert tonight_a["days_rest"] == 3  # last played G5 on 2024-10-22
-    assert tonight_a["std_net_rating"] == pytest.approx(-2.0)  # only G5 so far this season
+    assert tonight_a["season_net_rating"] == pytest.approx(-2.0)  # only G5 so far this season
 
 
 def test_serving_elo_matches_teams_final_post_history_rating() -> None:

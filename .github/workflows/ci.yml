@@ -17,7 +17,6 @@ jobs:
   backend:
     name: Backend
     runs-on: ubuntu-latest
-    if: hashFiles('backend/pyproject.toml') != '' && hashFiles('backend/uv.lock') != ''
     services:
       postgres:
         image: postgres:16
@@ -81,7 +80,6 @@ jobs:
   frontend:
     name: Frontend
     runs-on: ubuntu-latest
-    if: hashFiles('frontend/package.json') != ''
     defaults:
       run:
         working-directory: frontend
@@ -129,7 +127,6 @@ jobs:
     needs: [backend, frontend]
     if: |
       github.ref == 'refs/heads/main' &&
-      hashFiles('infra/docker/Dockerfile.backend') != '' &&
       (needs.backend.result == 'success' || needs.backend.result == 'skipped') &&
       (needs.frontend.result == 'success' || needs.frontend.result == 'skipped')
     steps:

@@ -89,6 +89,7 @@ addopts      = "-ra -q"
 module = [
     "nba_api.*",
     "pbpstats.*",
+    "requests.*",
     "mlflow.*",
     "shap.*",
     "pandera.*",

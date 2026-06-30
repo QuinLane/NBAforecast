@@ -34,6 +34,18 @@ class Settings(BaseSettings):
     # ── MLflow ────────────────────────────────────────────────────────────
     mlflow_tracking_uri: str = "http://localhost:5000"
 
+    # ── Ingestion (nba_api / pbpstats) ────────────────────────────────────
+    # stats.nba.com is finicky: throttle calls, retry with backoff, send real headers.
+    ingest_throttle_seconds: float = 0.6
+    ingest_request_timeout: int = 60
+    ingest_max_retries: int = 5
+    ingest_user_agent: str = (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+    )
+    # Local cache directory pbpstats writes raw responses into.
+    pbpstats_cache_dir: str = "data/pbpstats_cache"
+
     # ── App ───────────────────────────────────────────────────────────────
     env: Literal["development", "test", "production"] = "development"
     log_level: Annotated[

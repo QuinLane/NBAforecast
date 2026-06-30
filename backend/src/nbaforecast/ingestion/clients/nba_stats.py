@@ -69,12 +69,19 @@ def _execute(factory: Callable[[], JsonDict]) -> JsonDict:
         raise TransientIngestionError("non-JSON response from stats.nba.com") from exc
 
 
-def fetch_schedule(season: str, season_type: str = DEFAULT_SEASON_TYPE) -> JsonDict:
+def fetch_schedule(
+    season: str,
+    season_type: str = DEFAULT_SEASON_TYPE,
+    date_from: str | None = None,
+    date_to: str | None = None,
+) -> JsonDict:
     """Return the raw team game log for a season (one row per team per game).
 
     Args:
         season: NBA season string, e.g. ``"2023-24"``.
         season_type: ``Regular Season`` / ``Playoffs`` / ``Pre Season`` / ``Play In``.
+        date_from: Optional ``MM/DD/YYYY`` lower bound (used by the daily flow).
+        date_to: Optional ``MM/DD/YYYY`` upper bound.
     """
     timeout = get_settings().ingest_request_timeout
     return _execute(
@@ -82,6 +89,8 @@ def fetch_schedule(season: str, season_type: str = DEFAULT_SEASON_TYPE) -> JsonD
             season=season,
             season_type_all_star=season_type,
             player_or_team_abbreviation="T",
+            date_from_nullable=date_from or "",
+            date_to_nullable=date_to or "",
             headers=stats_headers(),
             timeout=timeout,
         ).get_dict()

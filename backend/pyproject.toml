@@ -26,6 +26,7 @@ dependencies = [
     "lightgbm>=4.4.0",
     "xgboost>=2.1.0",
     "scipy>=1.13.0",
+    "joblib>=1.4.0",
     # ── Experiment tracking ───────────────────────────────────────────────
     "mlflow>=2.14.0",
     # ── API ───────────────────────────────────────────────────────────────
@@ -102,5 +103,6 @@ module = [
     "xgboost.*",
     "prefect.*",
     "sklearn.*",
+    "joblib.*",
 ]
 ignore_missing_imports = true

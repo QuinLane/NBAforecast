@@ -2185,6 +2185,7 @@ explain = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "aiosqlite" },
     { name = "mypy" },
     { name = "pandas-stubs" },
     { name = "pytest" },
@@ -2227,6 +2228,7 @@ provides-extras = ["explain"]
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "aiosqlite", specifier = ">=0.22.1" },
     { name = "mypy", specifier = ">=1.10.0" },
     { name = "pandas-stubs", specifier = ">=2.2.0" },
     { name = "pytest", specifier = ">=8.2.0" },

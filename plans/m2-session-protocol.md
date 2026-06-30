@@ -65,8 +65,8 @@ Update this table as tasks land. PR column filled in once opened.
 | T2.7 | Game win-prob model (logistic + LightGBM + calibration) | done | [#22](https://github.com/QuinLane/NBAforecast/pull/22) |
 | T2.8 | MLflow tracking + promotion gate | done | [#23](https://github.com/QuinLane/NBAforecast/pull/23) |
 | T2.9 | Metrics module + tests | done | [#24](https://github.com/QuinLane/NBAforecast/pull/24) |
-| T2.10 | Explanation schema + TreeSHAP explainer | done | pending PR |
-| T2.11 | Feature humanizer | not started | — |
+| T2.10 | Explanation schema + TreeSHAP explainer | done | [#25](https://github.com/QuinLane/NBAforecast/pull/25) |
+| T2.11 | Feature humanizer | done | pending PR |
 | T2.12 | SHAP additivity test | not started | — |
 | T2.13 | API: deps/`ModelProvider` + schemas + routers | not started | — |
 | T2.14 | API contract tests (slice) | not started | — |

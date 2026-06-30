@@ -72,7 +72,7 @@ Update this table as tasks land. PR column filled in once opened.
 | T2.14 | API contract tests (slice) | done | [#29](https://github.com/QuinLane/NBAforecast/pull/29) |
 | T2.15 | Generated API client + Query hooks | done | [#30](https://github.com/QuinLane/NBAforecast/pull/30) |
 | T2.16 | PredictionExplainer + game-detail page | done | [#31](https://github.com/QuinLane/NBAforecast/pull/31) |
-| T2.17 | E2E smoke path | not started | — |
+| T2.17 | E2E smoke path | done | [#32](https://github.com/QuinLane/NBAforecast/pull/32) |
 
 M2 start point: `main` @ `ec6b42c` (T1.7, full-era backfill — M1 gate).
 

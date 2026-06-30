@@ -47,9 +47,10 @@ explain = [
 ]
 
 [project.scripts]
-nbaforecast-api     = "nbaforecast.entrypoints.api_server:main"
-nbaforecast-worker  = "nbaforecast.entrypoints.prefect_worker:main"
-nbaforecast-poller  = "nbaforecast.entrypoints.live_poller:main"
+nbaforecast-api      = "nbaforecast.entrypoints.api_server:main"
+nbaforecast-worker   = "nbaforecast.entrypoints.prefect_worker:main"
+nbaforecast-poller   = "nbaforecast.entrypoints.live_poller:main"
+nbaforecast-backfill = "nbaforecast.entrypoints.backfill:main"
 
 [build-system]
 requires      = ["hatchling"]

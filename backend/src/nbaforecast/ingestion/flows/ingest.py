@@ -22,6 +22,11 @@ from nbaforecast.storage.object_store import ObjectStore
 
 logger = logging.getLogger(__name__)
 
+# Earliest comprehensive play-by-play/shot season on stats.nba.com (roadmap §5, M1 DoD).
+PBP_ERA_START_YEAR = 1996
+# Season types backfilled across the era.
+ERA_SEASON_TYPES = ("Regular Season", "Playoffs")
+
 # Retry transient stats.nba.com failures with growing backoff; the throttle paces calls.
 _RETRY_DELAYS: list[float] = [10, 30, 60, 120]
 
@@ -70,3 +75,29 @@ async def ingest_daily(day: str | None = None) -> int:
         metas = await ingest_schedule(session, store, season, date_from=stamp, date_to=stamp)
         await session.commit()
     return await _run_games(metas)
+
+
+def _current_season_start_year() -> int:
+    return int(season_for_date(date.today())[:4])
+
+
+@flow(name="backfill-era")
+async def backfill_era(
+    start_year: int = PBP_ERA_START_YEAR,
+    end_year: int | None = None,
+    season_types: tuple[str, ...] = ERA_SEASON_TYPES,
+) -> int:
+    """Backfill every season from ``start_year`` through ``end_year`` (default: present).
+
+    Resumable: each season's games are skipped when the checkpoint already marks them complete,
+    so re-running after an interruption continues where it left off. Returns games processed.
+    """
+    end_year = end_year if end_year is not None else _current_season_start_year()
+    total = 0
+    for year in range(start_year, end_year + 1):
+        season = f"{year}-{(year + 1) % 100:02d}"
+        for season_type in season_types:
+            logger.info("backfilling %s (%s)", season, season_type)
+            total += await backfill_season(season, season_type)
+    logger.info("era backfill processed %d games", total)
+    return total

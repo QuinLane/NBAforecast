@@ -58,8 +58,8 @@ Update this table as tasks land. PR column filled in once opened.
 |------|-------------|--------|--------------|
 | T2.1 | Leakage-safe feature primitives | done | [#16](https://github.com/QuinLane/NBAforecast/pull/16) |
 | T2.2 | Team–game features + Elo | done | [#17](https://github.com/QuinLane/NBAforecast/pull/17) |
-| T2.3 | Feature materialization + refresh | done | pending PR |
-| T2.4 | No-leakage + train/serve parity tests | not started | — |
+| T2.3 | Feature materialization + refresh | done | [#18](https://github.com/QuinLane/NBAforecast/pull/18) |
+| T2.4 | No-leakage + train/serve parity tests | done | pending PR |
 | T2.5 | `ModelHead` interface + backtest harness | not started | — |
 | T2.6 | Baselines + floor test (game-win) | not started | — |
 | T2.7 | Game win-prob model (logistic + LightGBM + calibration) | not started | — |

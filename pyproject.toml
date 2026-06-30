@@ -49,6 +49,7 @@ module = [
     "requests.*",
     "boto3.*",
     "botocore.*",
+    "pyarrow.*",
     "mlflow.*",
     "shap.*",
     "pandera.*",

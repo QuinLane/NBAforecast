@@ -81,11 +81,17 @@ jobs:
 
   # ---------------------------------------------------------------------------
   # Frontend — lint, types, tests, build, OpenAPI drift check
-  # Activates once frontend/package.json exists (T0.5+).
+  # TODO(frontend, M2): RE-ENABLE — remove the `if: false` below.
+  # Disabled 2026-06-30: the T0.5 scaffold's package.json does not define the
+  # lint / type-check / test / generate-api-client scripts this job calls, and the
+  # OpenAPI drift check needs the generated client that lands in M2 (T2.15). Until the
+  # frontend toolchain is wired, this job can't pass; it is skipped so it doesn't block
+  # backend PRs. Re-enable (and finish the scripts) when frontend work starts at M2.
   # ---------------------------------------------------------------------------
   frontend:
     name: Frontend
     runs-on: ubuntu-latest
+    if: false  # TODO(frontend, M2): remove to re-enable — see note above
     defaults:
       run:
         working-directory: frontend

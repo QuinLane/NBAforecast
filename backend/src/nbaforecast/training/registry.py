@@ -17,6 +17,7 @@ all of them without per-flavor branching.
 """
 
 import logging
+import os
 import tempfile
 from pathlib import Path
 from typing import Any
@@ -34,12 +35,22 @@ CHAMPION_TAG = "champion"
 MODEL_ARTIFACT_SUBPATH = "model"
 MODEL_ARTIFACT_FILENAME = "model.joblib"
 
+# MLflow's HTTP client defaults to a 120s per-request timeout *and* 7 retries with an
+# exponential (factor-2) backoff — fine for tolerating real rate limiting, but it adds up to
+# several minutes when the tracking server is simply unreachable (confirmed empirically: ~280s
+# to fail one call). Far too long for a request-path call or app startup. Both are overridable
+# via the environment; these are just saner defaults when nothing else is set.
+DEFAULT_MLFLOW_HTTP_TIMEOUT_SECONDS = "5"
+DEFAULT_MLFLOW_HTTP_MAX_RETRIES = "1"
+
 
 def configure_tracking() -> None:
     """Point the MLflow client at the configured tracking server (idempotent)."""
     settings = get_settings()
     mlflow.set_tracking_uri(settings.mlflow_tracking_uri)
     settings.configure_mlflow_env()
+    os.environ.setdefault("MLFLOW_HTTP_REQUEST_TIMEOUT", DEFAULT_MLFLOW_HTTP_TIMEOUT_SECONDS)
+    os.environ.setdefault("MLFLOW_HTTP_REQUEST_MAX_RETRIES", DEFAULT_MLFLOW_HTTP_MAX_RETRIES)
 
 
 def log_run(

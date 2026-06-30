@@ -67,8 +67,8 @@ Update this table as tasks land. PR column filled in once opened.
 | T2.9 | Metrics module + tests | done | [#24](https://github.com/QuinLane/NBAforecast/pull/24) |
 | T2.10 | Explanation schema + TreeSHAP explainer | done | [#25](https://github.com/QuinLane/NBAforecast/pull/25) |
 | T2.11 | Feature humanizer | done | [#26](https://github.com/QuinLane/NBAforecast/pull/26) |
-| T2.12 | SHAP additivity test | done | pending PR |
-| T2.13 | API: deps/`ModelProvider` + schemas + routers | not started | — |
+| T2.12 | SHAP additivity test | done | [#27](https://github.com/QuinLane/NBAforecast/pull/27) |
+| T2.13 | API: deps/`ModelProvider` + schemas + routers | done | pending PR |
 | T2.14 | API contract tests (slice) | not started | — |
 | T2.15 | Generated API client + Query hooks | not started | — |
 | T2.16 | PredictionExplainer + game-detail page | not started | — |

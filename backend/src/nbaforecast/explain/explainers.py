@@ -76,7 +76,7 @@ def explain_lightgbm_classifier(
         raise ValueError("explain_lightgbm_classifier explains exactly one row at a time")
 
     design = design_matrix(features)
-    explainer = shap.TreeExplainer(model["booster"])
+    explainer = model.get("explainer") or shap.TreeExplainer(model["booster"])
     raw_shap = explainer.shap_values(design)
     # Some shap/LightGBM version combinations return a [class0, class1] list for binary
     # classifiers instead of a single margin-space array; always take the positive class.

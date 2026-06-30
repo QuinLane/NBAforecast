@@ -263,7 +263,13 @@ def humanize_contribution(contribution: Contribution) -> Contribution:
     standards.md §2: pipelines fail loud). The coverage test ensures this never fires for any
     feature the game-win head actually produces.
     """
-    meta = FEATURE_REGISTRY[contribution.feature]
+    try:
+        meta = FEATURE_REGISTRY[contribution.feature]
+    except KeyError as exc:
+        raise RuntimeError(
+            f"humanizer has no registry entry for feature {contribution.feature!r}; "
+            "add it to FEATURE_REGISTRY in humanizer.py"
+        ) from exc
     return contribution.model_copy(
         update={
             "display_label": meta.display_label,

@@ -35,12 +35,17 @@ async def _team_lookup(session: AsyncSession) -> dict[int, TeamSummary]:
 
 
 def _to_summary(game: Game, teams: dict[int, TeamSummary]) -> GameSummary:
+    home_team = teams.get(game.home_team_id)
+    away_team = teams.get(game.away_team_id)
+    if home_team is None or away_team is None:
+        missing = [t for t in (game.home_team_id, game.away_team_id) if t not in teams]
+        raise RuntimeError(f"team_id(s) {missing} not found in teams reference table")
     return GameSummary(
         game_id=game.game_id,
         season=game.season,
         game_date=game.game_date,
-        home_team=teams[game.home_team_id],
-        away_team=teams[game.away_team_id],
+        home_team=home_team,
+        away_team=away_team,
         home_score=game.home_score,
         away_score=game.away_score,
         status=game.status,
@@ -113,7 +118,9 @@ async def get_game_prediction(
     team_game_stats_df = await load_table_as_dataframe(session, TeamGameStats)
     teams_df = await load_table_as_dataframe(session, Team)
 
-    if game.status == "scheduled":
+    if game.status in ("scheduled", "live"):
+        # Live games haven't produced final box-score stats yet; treat them like scheduled
+        # games so features are built from prior games only (as_of = tip-off date).
         features = build_team_game_features(
             games_df, team_game_stats_df, teams_df, as_of=game.game_date
         )
@@ -128,7 +135,10 @@ async def get_game_prediction(
 
     loaded_head = model_provider.get(GAME_WIN_HEAD)
     win_prob = float(loaded_head.predict(home_row).iloc[0])
-    explanation = humanize(loaded_head.explain(home_row))
+    raw_explanation = loaded_head.explain(home_row)
+    # When calibration is active the SHAP values are in uncalibrated space and cannot attribute
+    # the isotonic step, so sync the headline number to what was actually served.
+    explanation = humanize(raw_explanation.model_copy(update={"prediction": win_prob}))
     if not full:
         explanation = explanation.model_copy(
             update={"contributions": explanation.contributions[:TOP_N_DRIVERS]}

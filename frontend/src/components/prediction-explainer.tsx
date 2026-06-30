@@ -88,8 +88,11 @@ export function PredictionExplainer({
   const contributions = explanation.contributions;
   const displayUnits: Explanation["units"] = showLogOdds
     ? "log_odds"
-    : "probability_points";
-  const maxAbs = Math.max(...contributions.map((c) => Math.abs(c.contribution)));
+    : explanation.units;
+  const maxAbs =
+    contributions.length > 0
+      ? Math.max(...contributions.map((c) => Math.abs(c.contribution)))
+      : 0;
 
   function handleSeeAll() {
     onRequestFull?.();

@@ -35,8 +35,8 @@ async def refresh_team_game_features(game_ids: list[str]) -> int:
         team_game_stats = await load_table_as_dataframe(session, TeamGameStats)
         teams = await load_table_as_dataframe(session, Team)
         features = materialize_team_game_features(games, team_game_stats, teams, game_ids=game_ids)
-        write_team_game_features_parquet(features)
         count = await upsert_team_game_features(session, features)
         await session.commit()
+        write_team_game_features_parquet(features)
     logger.info("refreshed features_team_game for %d game(s), %d rows", len(game_ids), count)
     return count

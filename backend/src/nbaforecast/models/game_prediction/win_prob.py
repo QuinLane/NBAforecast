@@ -11,6 +11,7 @@ from typing import Any
 
 import lightgbm as lgb
 import pandas as pd
+import shap
 from sklearn.impute import SimpleImputer
 from sklearn.isotonic import IsotonicRegression
 from sklearn.linear_model import LogisticRegression
@@ -148,7 +149,11 @@ class LightGBMWinProbHead(ModelHead[pd.Series]):
             calibrator.fit(raw_calib_probs, labels.loc[calib_index])
 
         return TrainResult(
-            model={"booster": booster, "calibrator": calibrator},
+            model={
+                "booster": booster,
+                "calibrator": calibrator,
+                "explainer": shap.TreeExplainer(booster),
+            },
             metrics={},
             feature_version=GAME_WIN_FEATURE_VERSION,
         )

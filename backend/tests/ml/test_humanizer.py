@@ -70,7 +70,7 @@ def test_humanize_contribution_handles_missing_value() -> None:
 
 def test_humanize_contribution_raises_for_unknown_feature() -> None:
     contribution = _contribution("not_a_real_feature", 1.0)
-    with pytest.raises(KeyError):
+    with pytest.raises(RuntimeError):
         humanize_contribution(contribution)
 
 

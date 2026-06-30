@@ -1,0 +1,16 @@
+{
+  "resultSets": [
+    {
+      "name": "PlayByPlay",
+      "headers": ["GAME_ID", "EVENTNUM", "PERIOD", "PCTIMESTRING", "EVENTMSGTYPE",
+                  "EVENTMSGACTIONTYPE", "HOMEDESCRIPTION", "VISITORDESCRIPTION",
+                  "NEUTRALDESCRIPTION", "SCORE", "PLAYER1_ID", "PLAYER1_TEAM_ID",
+                  "PLAYER2_ID", "PLAYER3_ID"],
+      "rowSet": [
+        ["0022300001", 1, 1, "12:00", 12, 0, null, null, "Start of Period", null, 0, 0, 0, 0],
+        ["0022300001", 2, 1, "11:34", 1, 5, "Davis Made Shot", null, null, "2 - 0",
+         201939, 1610612747, 0, 0]
+      ]
+    }
+  ]
+}

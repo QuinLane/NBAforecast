@@ -1,0 +1,17 @@
+{
+  "resultSets": [
+    {
+      "name": "Shot_Chart_Detail",
+      "headers": ["GAME_ID", "GAME_EVENT_ID", "PLAYER_ID", "TEAM_ID", "PERIOD",
+                  "MINUTES_REMAINING", "SECONDS_REMAINING", "LOC_X", "LOC_Y", "SHOT_DISTANCE",
+                  "SHOT_ZONE_BASIC", "SHOT_ZONE_AREA", "SHOT_ZONE_RANGE", "SHOT_TYPE",
+                  "ACTION_TYPE", "SHOT_MADE_FLAG"],
+      "rowSet": [
+        ["0022300001", 4, 201939, 1610612747, 1, 11, 20, -120, 80, 14, "Mid-Range",
+         "Center(C)", "8-16 ft.", "2PT Field Goal", "Jump Shot", 1],
+        ["0022300001", 7, 201935, 1610612738, 1, 10, 5, 12, 240, 25, "Above the Break 3",
+         "Center(C)", "24+ ft.", "3PT Field Goal", "Jump Shot", 0]
+      ]
+    }
+  ]
+}

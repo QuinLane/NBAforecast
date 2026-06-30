@@ -63,8 +63,8 @@ Update this table as tasks land. PR column filled in once opened.
 | T2.5 | `ModelHead` interface + backtest harness | done | [#20](https://github.com/QuinLane/NBAforecast/pull/20) |
 | T2.6 | Baselines + floor test (game-win) | done | [#21](https://github.com/QuinLane/NBAforecast/pull/21) |
 | T2.7 | Game win-prob model (logistic + LightGBM + calibration) | done | [#22](https://github.com/QuinLane/NBAforecast/pull/22) |
-| T2.8 | MLflow tracking + promotion gate | done | pending PR |
-| T2.9 | Metrics module + tests | not started | — |
+| T2.8 | MLflow tracking + promotion gate | done | [#23](https://github.com/QuinLane/NBAforecast/pull/23) |
+| T2.9 | Metrics module + tests | done | pending PR |
 | T2.10 | Explanation schema + TreeSHAP explainer | not started | — |
 | T2.11 | Feature humanizer | not started | — |
 | T2.12 | SHAP additivity test | not started | — |

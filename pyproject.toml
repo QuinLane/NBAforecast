@@ -56,5 +56,6 @@ module = [
     "lightgbm.*",
     "xgboost.*",
     "prefect.*",
+    "sklearn.*",
 ]
 ignore_missing_imports = true

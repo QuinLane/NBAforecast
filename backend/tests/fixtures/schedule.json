@@ -1,0 +1,12 @@
+{
+  "resultSets": [
+    {
+      "name": "LeagueGameLog",
+      "headers": ["SEASON_ID", "TEAM_ID", "GAME_ID", "GAME_DATE", "MATCHUP", "PTS"],
+      "rowSet": [
+        ["22023", 1610612747, "0022300001", "2023-10-24", "LAL vs. BOS", 110],
+        ["22023", 1610612738, "0022300001", "2023-10-24", "BOS @ LAL", 105]
+      ]
+    }
+  ]
+}

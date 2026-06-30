@@ -1,0 +1,22 @@
+[
+  {
+    "period": 1,
+    "start_seconds": 720,
+    "end_seconds": 710,
+    "offense_team_id": 1610612747,
+    "defense_team_id": 1610612738,
+    "points": 2,
+    "off_player_ids": [201939, 201142, 203076, 202681, 101108],
+    "def_player_ids": [201935, 202330, 203935, 1628369, 1627759]
+  },
+  {
+    "period": 1,
+    "start_seconds": 705,
+    "end_seconds": 690,
+    "offense_team_id": 1610612738,
+    "defense_team_id": 1610612747,
+    "points": 0,
+    "off_player_ids": [201935, 202330, 203935, 1628369, 1627759],
+    "def_player_ids": [201939, 201142, 203076, 202681, 101108]
+  }
+]

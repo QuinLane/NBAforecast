@@ -18,6 +18,8 @@ from typing import Any
 
 import pandas as pd
 
+from nbaforecast.explain.schema import Explanation
+
 
 @dataclass(slots=True, frozen=True)
 class TrainResult:
@@ -63,10 +65,5 @@ class ModelHead[PredictionT](ABC):
         MLflow champion) for already-materialized feature rows."""
 
     @abstractmethod
-    def explain(self, model: Any, features: pd.DataFrame) -> dict[str, Any]:
-        """Per-row explanation from an already-fitted ``model``.
-
-        Returns a plain ``dict`` for now; tightened to ``explain.schema.Explanation`` once T2.10
-        lands (the explanation schema doesn't exist yet — this interface predates it by design,
-        see implementation-plan.md §M2).
-        """
+    def explain(self, model: Any, features: pd.DataFrame) -> Explanation:
+        """Per-row explanation from an already-fitted ``model`` (explain.schema.Explanation)."""

@@ -45,6 +45,9 @@ dependencies = [
 [project.optional-dependencies]
 explain = [
     "shap>=0.46.0",
+    # Forces the resolver off shap's old numba<0.48 floor, which needs numpy.distutils
+    # (removed in numpy 2.0) and fails to build on a fresh install.
+    "numba>=0.60.0",
 ]
 
 [project.scripts]

@@ -45,7 +45,7 @@ def _game_head_and_features() -> tuple[LightGBMWinProbHead, pd.DataFrame, object
 def _props_head_and_features() -> tuple[PropsRegressorHead, pd.DataFrame, object]:
     from nbaforecast.features.player_game import build_player_game_features
 
-    games, team_game_stats, teams, pgs, players = build_synthetic_player_league(n_teams=6)
+    games, team_game_stats, _teams, pgs, players = build_synthetic_player_league(n_teams=6)
     features = build_player_game_features(games, pgs, team_game_stats, players)
     labels = features.merge(pgs[["game_id", "player_id", "pts"]], on=["game_id", "player_id"])[
         "pts"

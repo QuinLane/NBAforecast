@@ -2160,6 +2160,7 @@ dependencies = [
     { name = "lightgbm" },
     { name = "mlflow" },
     { name = "nba-api" },
+    { name = "numba" },
     { name = "numpy" },
     { name = "pandas" },
     { name = "pandera" },
@@ -2172,15 +2173,10 @@ dependencies = [
     { name = "redis", extra = ["hiredis"] },
     { name = "scikit-learn" },
     { name = "scipy" },
+    { name = "shap" },
     { name = "sqlalchemy", extra = ["asyncio"] },
     { name = "uvicorn", extra = ["standard"] },
     { name = "xgboost" },
-]
-
-[package.optional-dependencies]
-explain = [
-    { name = "numba" },
-    { name = "shap" },
 ]
 
 [package.dev-dependencies]
@@ -2206,7 +2202,7 @@ requires-dist = [
     { name = "lightgbm", specifier = ">=4.4.0" },
     { name = "mlflow", specifier = ">=2.14.0" },
     { name = "nba-api", specifier = ">=1.5.0" },
-    { name = "numba", marker = "extra == 'explain'", specifier = ">=0.60.0" },
+    { name = "numba", specifier = ">=0.60.0" },
     { name = "numpy", specifier = ">=1.26.0" },
     { name = "pandas", specifier = ">=2.2.0" },
     { name = "pandera", specifier = ">=0.20.0" },
@@ -2219,12 +2215,11 @@ requires-dist = [
     { name = "redis", extras = ["hiredis"], specifier = ">=5.0.0" },
     { name = "scikit-learn", specifier = ">=1.5.0" },
     { name = "scipy", specifier = ">=1.13.0" },
-    { name = "shap", marker = "extra == 'explain'", specifier = ">=0.46.0" },
+    { name = "shap", specifier = ">=0.46.0" },
     { name = "sqlalchemy", extras = ["asyncio"], specifier = ">=2.0.0" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.30.0" },
     { name = "xgboost", specifier = ">=2.1.0" },
 ]
-provides-extras = ["explain"]
 
 [package.metadata.requires-dev]
 dev = [

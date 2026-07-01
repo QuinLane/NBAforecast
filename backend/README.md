@@ -57,6 +57,22 @@ overnight. Start with a single recent season to validate the stack end-to-end be
 uv run nbaforecast-worker     # serves the ingest-daily deployment (cron, default 6am ET)
 ```
 
+## Training + champion promotion (T3.14)
+
+With data backfilled, train heads and run the champion/challenger gate — walk-forward backtest →
+final fit on the trailing window → MLflow run (params, backtest metrics, model artifact, global
+SHAP) → promotion gate:
+
+```bash
+uv run nbaforecast-train                              # all heads
+uv run nbaforecast-train --heads game_win props_pts   # a subset
+uv run nbaforecast-train --lookback-seasons 5         # smaller training window
+uv run nbaforecast-train --rapm-snapshots             # also build historical player_rapm
+```
+
+The API hot-reloads a newly promoted champion within its registry-poll interval — no restart
+needed.
+
 ## Entrypoints
 
 | Command | Purpose |
@@ -64,4 +80,5 @@ uv run nbaforecast-worker     # serves the ingest-daily deployment (cron, defaul
 | `nbaforecast-api` | FastAPI service (`GET /health`) |
 | `nbaforecast-worker` | Prefect worker serving the nightly ingest deployment |
 | `nbaforecast-backfill` | Historical season backfill (full PBP era by default) |
+| `nbaforecast-train` | Train heads + champion promotion gate (and RAPM snapshots) |
 | `nbaforecast-poller` | Live game poller (M4) |

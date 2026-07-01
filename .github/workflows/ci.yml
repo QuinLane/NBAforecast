@@ -55,7 +55,7 @@ jobs:
         run: uv python install 3.12
 
       - name: Install dependencies
-        run: uv sync --frozen --group dev --extra explain
+        run: uv sync --frozen --group dev
 
       - name: Ruff — lint
         run: uv run ruff check src tests

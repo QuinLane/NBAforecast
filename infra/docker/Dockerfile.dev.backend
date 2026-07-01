@@ -24,13 +24,14 @@ WORKDIR /app/backend
 # Install third-party deps WITHOUT the nbaforecast package itself.  This layer is
 # reused whenever pyproject.toml/uv.lock are unchanged, regardless of source edits.
 COPY backend/pyproject.toml backend/uv.lock ./
-RUN uv sync --frozen --no-dev --no-install-project
+# --extra explain: shap is a hard import in the API since T2.10 (TreeSHAP explainer).
+RUN uv sync --frozen --no-dev --no-install-project --extra explain
 
 # ── Source ─────────────────────────────────────────────────────────────────────
 # src/ must exist before the second `uv sync` installs nbaforecast in editable mode
 # because hatchling scans the package tree at install time.
 # Overridden by the docker-compose volume mount for local development.
 COPY backend/src ./src
-RUN uv sync --frozen --no-dev
+RUN uv sync --frozen --no-dev --extra explain
 
 ENV PATH="/app/backend/.venv/bin:$PATH"

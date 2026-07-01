@@ -13,7 +13,10 @@ class Settings(BaseSettings):
 
     model_config = SettingsConfigDict(
         env_prefix="NBAF_",
-        env_file=".env",
+        # The .env lives at the repo root, but host-side tools (alembic, backfill) run
+        # from backend/ — check the parent too. Missing paths are ignored; the last
+        # existing file wins, and real environment variables override both.
+        env_file=("../.env", ".env"),
         env_file_encoding="utf-8",
         extra="ignore",
     )

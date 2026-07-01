@@ -22,6 +22,9 @@ from nbaforecast.storage.repositories import load_table_as_dataframe
 
 TOP_N_DRIVERS = 5
 GAME_WIN_HEAD = "game_win"
+# Regressor heads (T3.1) attached to the prediction when a champion is promoted for them —
+# schema field -> head name. Skipped silently while a head has no champion yet.
+GAME_REGRESSOR_HEADS = {"margin": "game_margin", "total": "game_total"}
 
 
 async def _team_lookup(session: AsyncSession) -> dict[int, TeamSummary]:
@@ -144,4 +147,11 @@ async def get_game_prediction(
             update={"contributions": explanation.contributions[:TOP_N_DRIVERS]}
         )
 
-    return GamePrediction(game_id=game_id, win_prob=win_prob, explanation=explanation)
+    regressor_values: dict[str, float] = {}
+    for field, head_name in GAME_REGRESSOR_HEADS.items():
+        if model_provider.is_loaded(head_name):
+            regressor_values[field] = float(model_provider.get(head_name).predict(home_row).iloc[0])
+
+    return GamePrediction(
+        game_id=game_id, win_prob=win_prob, explanation=explanation, **regressor_values
+    )

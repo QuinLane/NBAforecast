@@ -5,10 +5,11 @@ A registry mapping every feature the game-win explanations can reference to a
 raw ``Contribution``/``Explanation`` objects into the human-readable form the frontend renders
 ("**+6%** from a **2-day rest advantage**" instead of ``days_rest=2``).
 
-Scoped to ``features/team_game.py``'s ``FEATURE_COLUMNS`` + ``is_home`` (M2's vertical slice
-covers the game-win head only — see ``models/game_prediction/win_prob.py::MODEL_FEATURE_COLUMNS``,
-the exact set this registry is tested against). ``features_player_game``/``features_game_state``
-entries land alongside their own builders in T3.2/T4.1.
+Covers the team-game features the game-win/margin/total heads read
+(``models/game_prediction/win_prob.py::MODEL_FEATURE_COLUMNS``) and, since T3.10, the
+player-game features the props heads read (``models/props/regressor.py::MODEL_FEATURE_COLUMNS``).
+The coverage test asserts this registry is exactly the union of those two sets.
+``features_game_state`` entries land alongside the live head in T4.1.
 """
 
 import math
@@ -102,6 +103,30 @@ def _format_signed_days(value: Any) -> str:
 @_na_guarded
 def _format_bool(value: Any) -> str:
     return "yes" if bool(value) else "no"
+
+
+@_na_guarded
+def _format_stat(value: Any) -> str:
+    """Per-game counting stat / average to one decimal (e.g. ``24.3``)."""
+    return f"{float(value):.1f}"
+
+
+@_na_guarded
+def _format_minutes(value: Any) -> str:
+    return f"{float(value):.1f} min"
+
+
+@_na_guarded
+def _format_signed_minutes(value: Any) -> str:
+    minutes = float(value)
+    sign = "+" if minutes >= 0 else ""
+    return f"{sign}{minutes:.1f} min"
+
+
+@_na_guarded
+def _format_rating_plain(value: Any) -> str:
+    """An unsigned rating (e.g. an opponent's defensive rating around 110)."""
+    return f"{float(value):.1f}"
 
 
 FEATURE_REGISTRY: dict[str, FeatureMeta] = {
@@ -253,6 +278,83 @@ FEATURE_REGISTRY: dict[str, FeatureMeta] = {
         "Home court", "Whether the team is playing at home tonight.", "boolean", _format_bool
     ),
 }
+
+
+# ── Player-game (props) features ──────────────────────────────────────────────────────────────
+# Registered here so props explanations (models/props/regressor.py, over features_player_game)
+# humanize the same way game-win explanations do. Built programmatically for the repetitive
+# per-stat rolling/season entries; see features/player_game.py's FEATURE_COLUMNS.
+
+_PROPS_STAT_LABELS = {
+    "pts": "points",
+    "reb": "rebounds",
+    "ast": "assists",
+    "fg3m": "three-pointers made",
+}
+
+for _stat, _label in _PROPS_STAT_LABELS.items():
+    for _window in (5, 10, 15):
+        FEATURE_REGISTRY[f"roll{_window}_{_stat}"] = FeatureMeta(
+            f"{_label.capitalize()}, last {_window} games",
+            f"Average {_label} over the player's last {_window} games.",
+            _label,
+            _format_stat,
+        )
+    FEATURE_REGISTRY[f"season_avg_{_stat}"] = FeatureMeta(
+        f"{_label.capitalize()}, season average",
+        f"Average {_label} per game so far this season.",
+        _label,
+        _format_stat,
+    )
+
+for _stat, _label in (("pts", "points"), ("reb", "rebounds"), ("ast", "assists")):
+    FEATURE_REGISTRY[f"roll10_std_{_stat}"] = FeatureMeta(
+        f"{_label.capitalize()} volatility, last 10 games",
+        f"Standard deviation of {_label} over the last 10 games (game-to-game consistency).",
+        _label,
+        _format_stat,
+    )
+
+FEATURE_REGISTRY.update(
+    {
+        "roll_minutes": FeatureMeta(
+            "Minutes, recent average",
+            "Average minutes played in the player's recent games.",
+            "minutes",
+            _format_minutes,
+        ),
+        "usage_rate": FeatureMeta(
+            "Usage rate",
+            "Share of the team's possessions the player uses while on the court.",
+            "percent",
+            _format_percent,
+        ),
+        "minutes_trend": FeatureMeta(
+            "Minutes trend",
+            "Recent minutes minus the longer-baseline minutes — a rising or falling role.",
+            "minutes",
+            _format_signed_minutes,
+        ),
+        "opp_def_rating": FeatureMeta(
+            "Opponent defensive rating",
+            "Points the opponent allows per 100 possessions.",
+            "rating",
+            _format_rating_plain,
+        ),
+        "opp_pace": FeatureMeta(
+            "Opponent pace",
+            "Opponent possessions per 48 minutes — more possessions mean more counting stats.",
+            "pace",
+            _format_pace,
+        ),
+        "opp_pos_def": FeatureMeta(
+            "Opponent positional defense",
+            "Points the opponent allows to the player's position.",
+            "rating",
+            _format_rating_plain,
+        ),
+    }
+)
 
 
 def humanize_contribution(contribution: Contribution) -> Contribution:

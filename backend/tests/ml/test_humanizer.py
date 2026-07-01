@@ -9,7 +9,14 @@ import math
 import pytest
 from nbaforecast.explain.humanizer import FEATURE_REGISTRY, humanize, humanize_contribution
 from nbaforecast.explain.schema import Contribution, Explanation, ExplanationUnits
-from nbaforecast.models.game_prediction.win_prob import MODEL_FEATURE_COLUMNS
+from nbaforecast.models.game_prediction.win_prob import (
+    MODEL_FEATURE_COLUMNS as GAME_WIN_FEATURES,
+)
+from nbaforecast.models.props.regressor import MODEL_FEATURE_COLUMNS as PROPS_FEATURES
+
+# The humanizer registry must cover every feature any batch head with a humanized explanation
+# produces — game-win/margin/total (team-game features) and props (player-game features).
+MODEL_FEATURE_COLUMNS = tuple({*GAME_WIN_FEATURES, *PROPS_FEATURES})
 
 
 def _contribution(feature: str, raw_value: object) -> Contribution:

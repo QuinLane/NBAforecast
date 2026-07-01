@@ -232,10 +232,24 @@ FEATURES_TEAM_GAME_SCHEMA = pa.schema(
     ]
 )
 
+PLAYER_RAPM_SCHEMA = pa.schema(
+    [
+        pa.field("player_id", pa.int64(), nullable=False),
+        pa.field("as_of_date", pa.date32(), nullable=False),
+        _SEASON_PARTITION,
+        pa.field("window", pa.int32(), nullable=False),
+        pa.field("orapm", pa.float64(), nullable=False),
+        pa.field("drapm", pa.float64(), nullable=False),
+        pa.field("rapm", pa.float64(), nullable=False),
+        pa.field("possessions", pa.int32(), nullable=False),
+    ]
+)
+
 # Gold table name → schema. Populated incrementally as builders land (features_team_game now,
 # features_player_game/features_game_state once T3.2/T4.1 ship).
 GOLD_PARQUET_SCHEMAS: dict[str, pa.Schema] = {
     "features_team_game": FEATURES_TEAM_GAME_SCHEMA,
+    "player_rapm": PLAYER_RAPM_SCHEMA,
 }
 
 PARTITION_COLUMN = "season_start_year"

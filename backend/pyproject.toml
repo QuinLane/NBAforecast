@@ -110,5 +110,6 @@ module = [
     "prefect.*",
     "sklearn.*",
     "joblib.*",
+    "scipy.*",
 ]
 ignore_missing_imports = true

@@ -36,17 +36,12 @@ dependencies = [
     "pydantic-settings>=2.3.0",
     # ── Cache ─────────────────────────────────────────────────────────────
     "redis[hiredis]>=5.0.0",
-]
-
-# shap is in its own extra because its numba/llvmlite transitive deps have
-# Python-version constraints that change between shap releases.  Add this
-# extra when writing T2.10 (TreeSHAP explainer).  Install with:
-#   uv sync --extra explain
-[project.optional-dependencies]
-explain = [
+    # ── Explainability ────────────────────────────────────────────────────
+    # shap was an optional "explain" extra until M3.5: since T2.10 the package hard-imports
+    # it (models, API), so every environment that forgot the extra crash-looped — a required
+    # dep in optional clothing. numba's floor forces the resolver off shap's old numba<0.48
+    # bound, which needs numpy.distutils (removed in numpy 2.0) and fails on fresh installs.
     "shap>=0.46.0",
-    # Forces the resolver off shap's old numba<0.48 floor, which needs numpy.distutils
-    # (removed in numpy 2.0) and fails to build on a fresh install.
     "numba>=0.60.0",
 ]
 
@@ -55,6 +50,7 @@ nbaforecast-api      = "nbaforecast.entrypoints.api_server:main"
 nbaforecast-worker   = "nbaforecast.entrypoints.prefect_worker:main"
 nbaforecast-poller   = "nbaforecast.entrypoints.live_poller:main"
 nbaforecast-backfill = "nbaforecast.entrypoints.backfill:main"
+nbaforecast-train    = "nbaforecast.entrypoints.train:main"
 
 [build-system]
 requires      = ["hatchling"]

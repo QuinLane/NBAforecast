@@ -89,6 +89,159 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/teams": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Teams */
+        get: operations["list_teams_api_v1_teams_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/teams/{team_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Team */
+        get: operations["get_team_api_v1_teams__team_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/players": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Players */
+        get: operations["list_players_api_v1_players_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/players/{player_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Player */
+        get: operations["get_player_api_v1_players__player_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/players/{player_id}/shots": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Player Shots */
+        get: operations["get_player_shots_api_v1_players__player_id__shots_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/players/{player_id}/rapm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Player Rapm */
+        get: operations["get_player_rapm_api_v1_players__player_id__rapm_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/players/{player_id}/props": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Player Props */
+        get: operations["get_player_props_api_v1_players__player_id__props_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/rapm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Rapm Leaderboard */
+        get: operations["rapm_leaderboard_api_v1_rapm_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/stats/leaderboards": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Leaderboards */
+        get: operations["leaderboards_api_v1_stats_leaderboards_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -159,8 +312,8 @@ export interface components {
              * Format: date
              */
             game_date: string;
-            home_team: components["schemas"]["TeamSummary"];
-            away_team: components["schemas"]["TeamSummary"];
+            home_team: components["schemas"]["nbaforecast__api__schemas__games__TeamSummary"];
+            away_team: components["schemas"]["nbaforecast__api__schemas__games__TeamSummary"];
             /** Home Score */
             home_score: number | null;
             /** Away Score */
@@ -206,8 +359,8 @@ export interface components {
              * Format: date
              */
             game_date: string;
-            home_team: components["schemas"]["TeamSummary"];
-            away_team: components["schemas"]["TeamSummary"];
+            home_team: components["schemas"]["nbaforecast__api__schemas__games__TeamSummary"];
+            away_team: components["schemas"]["nbaforecast__api__schemas__games__TeamSummary"];
             /** Home Score */
             home_score: number | null;
             /** Away Score */
@@ -220,6 +373,22 @@ export interface components {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
         };
+        /**
+         * LeaderboardEntry
+         * @description One row of a generic stat leaderboard — ``GET /stats/leaderboards``.
+         */
+        LeaderboardEntry: {
+            /** Player Id */
+            player_id: number;
+            /** Full Name */
+            full_name: string | null;
+            /** Stat */
+            stat: string;
+            /** Value */
+            value: number;
+            /** Games Played */
+            games_played: number;
+        };
         /** Page[GameSummary] */
         Page_GameSummary_: {
             /** Items */
@@ -231,17 +400,206 @@ export interface components {
             /** Page Size */
             page_size: number;
         };
+        /** Page[LeaderboardEntry] */
+        Page_LeaderboardEntry_: {
+            /** Items */
+            items: components["schemas"]["LeaderboardEntry"][];
+            /** Total */
+            total: number;
+            /** Page */
+            page: number;
+            /** Page Size */
+            page_size: number;
+        };
+        /** Page[PlayerSummary] */
+        Page_PlayerSummary_: {
+            /** Items */
+            items: components["schemas"]["PlayerSummary"][];
+            /** Total */
+            total: number;
+            /** Page */
+            page: number;
+            /** Page Size */
+            page_size: number;
+        };
+        /** Page[RapmEntry] */
+        Page_RapmEntry_: {
+            /** Items */
+            items: components["schemas"]["RapmEntry"][];
+            /** Total */
+            total: number;
+            /** Page */
+            page: number;
+            /** Page Size */
+            page_size: number;
+        };
+        /** Page[TeamSummary] */
+        Page_TeamSummary_: {
+            /** Items */
+            items: components["schemas"]["nbaforecast__api__schemas__players__TeamSummary"][];
+            /** Total */
+            total: number;
+            /** Page */
+            page: number;
+            /** Page Size */
+            page_size: number;
+        };
         /**
-         * TeamSummary
-         * @description The minimal team identity embedded in a game response.
+         * PlayerDetail
+         * @description Full player profile — ``GET /players/{player_id}`` (profile + recent game logs).
          */
-        TeamSummary: {
-            /** Team Id */
-            team_id: number;
-            /** Abbreviation */
-            abbreviation: string;
+        PlayerDetail: {
+            /** Player Id */
+            player_id: number;
             /** Full Name */
             full_name: string;
+            /** Position */
+            position: string | null;
+            /** Is Active */
+            is_active: boolean;
+            /** Height Inches */
+            height_inches: number | null;
+            /** Weight Lbs */
+            weight_lbs: number | null;
+            /** Birthdate */
+            birthdate: string | null;
+            /** Recent Games */
+            recent_games: components["schemas"]["PlayerGameLog"][];
+        };
+        /**
+         * PlayerGameLog
+         * @description One recent game line on a player's profile.
+         */
+        PlayerGameLog: {
+            /** Game Id */
+            game_id: string;
+            /**
+             * Game Date
+             * Format: date
+             */
+            game_date: string;
+            /** Team Id */
+            team_id: number;
+            /** Opponent Team Id */
+            opponent_team_id: number;
+            /** Is Home */
+            is_home: boolean;
+            /** Min */
+            min: number | null;
+            /** Pts */
+            pts: number;
+            /** Reb */
+            reb: number;
+            /** Ast */
+            ast: number;
+            /** Fg3M */
+            fg3m: number;
+        };
+        /**
+         * PlayerSummary
+         * @description One row of a players list — ``GET /players``.
+         */
+        PlayerSummary: {
+            /** Player Id */
+            player_id: number;
+            /** Full Name */
+            full_name: string;
+            /** Position */
+            position: string | null;
+            /** Is Active */
+            is_active: boolean;
+        };
+        /**
+         * PropsProjection
+         * @description A single-stat props projection — backend-api.md §4 ``PropsProjection``.
+         */
+        PropsProjection: {
+            /** Player Id */
+            player_id: number;
+            /** Game Id */
+            game_id: string;
+            /** Stat */
+            stat: string;
+            /** Point */
+            point: number;
+            /** Interval Low */
+            interval_low: number;
+            /** Interval High */
+            interval_high: number;
+            explanation: components["schemas"]["Explanation"];
+        };
+        /**
+         * RapmEntry
+         * @description One leaderboard row — a player's RAPM from a single snapshot (backend-api.md §4).
+         */
+        RapmEntry: {
+            /** Player Id */
+            player_id: number;
+            /** Full Name */
+            full_name: string | null;
+            /**
+             * As Of Date
+             * Format: date
+             */
+            as_of_date: string;
+            /** Window */
+            window: number;
+            /** Orapm */
+            orapm: number | null;
+            /** Drapm */
+            drapm: number | null;
+            /** Rapm */
+            rapm: number | null;
+            /** Possessions */
+            possessions: number | null;
+        };
+        /**
+         * RapmHistoryEntry
+         * @description One point in a player's RAPM history — ``GET /players/{player_id}/rapm``.
+         */
+        RapmHistoryEntry: {
+            /**
+             * As Of Date
+             * Format: date
+             */
+            as_of_date: string;
+            /** Window */
+            window: number;
+            /** Orapm */
+            orapm: number | null;
+            /** Drapm */
+            drapm: number | null;
+            /** Rapm */
+            rapm: number | null;
+            /** Possessions */
+            possessions: number | null;
+        };
+        /**
+         * ShotChartEntry
+         * @description One field-goal attempt for the shot chart — ``GET /players/{player_id}/shots``.
+         *
+         *     Respects ``location_reliable`` (data-model): unreliable-location attempts still count toward
+         *     make/miss but carry a flag so the frontend can omit them from the spatial chart.
+         */
+        ShotChartEntry: {
+            /** Game Id */
+            game_id: string;
+            /** Period */
+            period: number;
+            /** Loc X */
+            loc_x: number | null;
+            /** Loc Y */
+            loc_y: number | null;
+            /** Shot Distance */
+            shot_distance: number | null;
+            /** Shot Zone */
+            shot_zone: string | null;
+            /** Shot Type */
+            shot_type: string | null;
+            /** Made */
+            made: boolean;
+            /** Location Reliable */
+            location_reliable: boolean;
         };
         /** ValidationError */
         ValidationError: {
@@ -255,6 +613,34 @@ export interface components {
             input?: unknown;
             /** Context */
             ctx?: Record<string, never>;
+        };
+        /**
+         * TeamSummary
+         * @description The minimal team identity embedded in a game response.
+         */
+        nbaforecast__api__schemas__games__TeamSummary: {
+            /** Team Id */
+            team_id: number;
+            /** Abbreviation */
+            abbreviation: string;
+            /** Full Name */
+            full_name: string;
+        };
+        /**
+         * TeamSummary
+         * @description One row of a teams list — ``GET /teams``.
+         */
+        nbaforecast__api__schemas__players__TeamSummary: {
+            /** Team Id */
+            team_id: number;
+            /** Abbreviation */
+            abbreviation: string;
+            /** Full Name */
+            full_name: string;
+            /** Conference */
+            conference: string | null;
+            /** Division */
+            division: string | null;
         };
     };
     responses: never;
@@ -402,6 +788,302 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["GamePrediction"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_teams_api_v1_teams_get: {
+        parameters: {
+            query?: {
+                page?: number;
+                page_size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_TeamSummary_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_team_api_v1_teams__team_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                team_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["nbaforecast__api__schemas__players__TeamSummary"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_players_api_v1_players_get: {
+        parameters: {
+            query?: {
+                active?: boolean | null;
+                page?: number;
+                page_size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_PlayerSummary_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_player_api_v1_players__player_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                player_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlayerDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_player_shots_api_v1_players__player_id__shots_get: {
+        parameters: {
+            query?: {
+                season?: string | null;
+            };
+            header?: never;
+            path: {
+                player_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShotChartEntry"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_player_rapm_api_v1_players__player_id__rapm_get: {
+        parameters: {
+            query?: {
+                window?: number;
+            };
+            header?: never;
+            path: {
+                player_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RapmHistoryEntry"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_player_props_api_v1_players__player_id__props_get: {
+        parameters: {
+            query: {
+                game_id: string;
+                full?: boolean;
+            };
+            header?: never;
+            path: {
+                player_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PropsProjection"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    rapm_leaderboard_api_v1_rapm_get: {
+        parameters: {
+            query?: {
+                window?: number;
+                as_of?: string | null;
+                sort?: string;
+                page?: number;
+                page_size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_RapmEntry_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    leaderboards_api_v1_stats_leaderboards_get: {
+        parameters: {
+            query: {
+                stat: string;
+                season?: string | null;
+                page?: number;
+                page_size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_LeaderboardEntry_"];
                 };
             };
             /** @description Validation Error */

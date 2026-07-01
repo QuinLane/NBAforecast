@@ -245,10 +245,58 @@ PLAYER_RAPM_SCHEMA = pa.schema(
     ]
 )
 
-# Gold table name → schema. Populated incrementally as builders land (features_team_game now,
-# features_player_game/features_game_state once T3.2/T4.1 ship).
+FEATURES_PLAYER_GAME_SCHEMA = pa.schema(
+    [
+        pa.field("game_id", pa.string(), nullable=False),
+        pa.field("player_id", pa.int64(), nullable=False),
+        _SEASON_PARTITION,
+        pa.field("team_id", pa.int64(), nullable=False),
+        pa.field("opponent_team_id", pa.int64(), nullable=False),
+        pa.field("season", pa.string(), nullable=False),
+        pa.field("game_date", pa.date32(), nullable=False),
+        pa.field("is_home", pa.bool_(), nullable=False),
+        pa.field("days_rest", pa.float64()),
+        pa.field("is_back_to_back", pa.float64()),
+        *[
+            pa.field(c, pa.float64())
+            for c in (
+                "roll5_pts",
+                "roll10_pts",
+                "roll15_pts",
+                "roll10_std_pts",
+                "roll5_reb",
+                "roll10_reb",
+                "roll15_reb",
+                "roll10_std_reb",
+                "roll5_ast",
+                "roll10_ast",
+                "roll15_ast",
+                "roll10_std_ast",
+                "roll5_fg3m",
+                "roll10_fg3m",
+                "roll15_fg3m",
+                "season_avg_pts",
+                "season_avg_reb",
+                "season_avg_ast",
+                "season_avg_fg3m",
+                "roll_minutes",
+                "usage_rate",
+                "minutes_trend",
+                "opp_def_rating",
+                "opp_pace",
+                "opp_pos_def",
+                "player_rapm",
+            )
+        ],
+        pa.field("feature_version", pa.string(), nullable=False),
+    ]
+)
+
+# Gold table name → schema. Populated incrementally as builders land (features_team_game and
+# features_player_game now, features_game_state once T4.1 ships).
 GOLD_PARQUET_SCHEMAS: dict[str, pa.Schema] = {
     "features_team_game": FEATURES_TEAM_GAME_SCHEMA,
+    "features_player_game": FEATURES_PLAYER_GAME_SCHEMA,
     "player_rapm": PLAYER_RAPM_SCHEMA,
 }
 

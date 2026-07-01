@@ -8,9 +8,13 @@ win probability, RAPM), every prediction broken down with SHAP. Located at
 `D:\PROJECTS 2026\NBAforecast`.
 
 ## Status
-M0 and M1 are merged to `main`. Implementation is in **M2** (feature pipeline + vertical slice).
-If resuming M2 cold, read `plans/m2-session-protocol.md` next — it has the active build protocol
-and a progress tracker of which T2.x tasks are done.
+**M0–M3 are merged to `main`** (all batch heads: win/margin/total/props/RAPM, explained; PRs
+#16–#40). Roadmap was restructured 2026-07-01 for portfolio impact — see `plans/roadmap.md` §6:
+new milestones **M3.5** (stack verification on real data — do this next) and **M4.5** (market
+benchmark + public report card + injury features); M4 is replay-first. Known debt: the docker
+stack has never been browser-verified end-to-end and no MLflow champion exists in dev (some
+endpoints 503) — that is exactly what M3.5 pays down. `plans/m2-session-protocol.md` is historical.
+A plain-language technical breakdown of the whole project lives at `docs/project-explainer.md`.
 
 ## Start here (planning docs)
 - `plans/master-plan.md` — index + every decision made.

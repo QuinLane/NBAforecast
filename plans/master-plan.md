@@ -35,14 +35,23 @@ predictions with visible feature attributions (the "glass box" theme).
 - **RAPM** — regularized adjusted plus-minus player value (ridge on sparse lineup matrix).
 - **Stats hub** — clean display of stats/shot charts powered by the pipeline.
 - **SHAP explainability** — cross-cutting; every model exposes feature attributions.
+- **Market benchmark + public report card** *(promoted from v2, 2026-07-01)* — historical closing
+  odds (~2007→) + nightly line capture; a nightly-updated public self-grading page (Brier/log-loss
+  vs. market, calibration, ATS, props hit rates). Framed as calibration honesty, never betting edge.
+- **Famous-games replay** — archived play-by-play through the identical live pipeline; curated
+  iconic games with a scrubber + per-moment explained win prob. Live lane demoable off-season.
+- **Injury/availability features** — official injury report ingested; availability as model input.
+- **Monte Carlo season simulator** — playoff/seed/title odds off the game head, nightly.
+- **Props uncertainty bands + prediction provenance** — quantile intervals under the point
+  estimate; model version/training date on every prediction.
 
 ### v2+ (deferred)
 - **Shot-quality model** — expected FG% (all-seasons location/context; defender-aware only on
   the 2013–16 SportVU archive — see [data-pipeline.md](data-pipeline.md) for the data caveat).
 - **Computer-vision shot tracker** — ball-trajectory make/miss from video. Architecturally
   separate (CV, not tabular). Treat as a standalone Phase 3 moonshot.
-- **Betting-market benchmark** — historical odds source + "edge vs. closing line" UI. v1 model
-  output schemas already reserve a `market` field for this. See [modeling.md §10](modeling.md).
+- **Intraday line movement** — v1 captures closing lines only ($0); finer-grained odds history is
+  a paid tier. See [modeling.md §10](modeling.md).
 - **Live community predictions/polls** — a genuinely interactive, bidirectional feature; the
   intended home for **WebSockets** (v1 live win-prob uses one-way SSE — see
   [backend-api.md §7](backend-api.md)).
@@ -123,3 +132,12 @@ S3/MinIO + Parquet · Redis · Docker · GitHub Actions · Next.js + TypeScript 
     ruff/mypy-strict, trunk-based + squash-merge, Conventional Commits, snake_case JSON, layering
     rules, PR Definition-of-Done. Implementation plan: dependency-ordered task checklist
     (T0.1→T6.6) mapped to milestones with gates; one task = one branch = one PR.
+- 2026-07-01 — **Portfolio restructure** (M0–M3 complete at this point). v1 scope expanded:
+  market benchmark + public report card promoted from v2, famous-games replay, injury/availability
+  features, Monte Carlo season simulator, props uncertainty bands + provenance. Roadmap gains
+  **M3.5** (stack verification on real data — pays down the deferred M2/M3 live-stack debt) and
+  **M4.5** (market benchmark + report card + availability); M4 is now replay-first. See
+  [roadmap.md §6](roadmap.md) for the decision log and
+  [implementation-plan.md](implementation-plan.md) for tasks T3.13–T3.15, T4.11–T4.17, T5.5–T5.6.
+  New: [`docs/project-explainer.md`](../docs/project-explainer.md) — plain-language technical
+  breakdown of the whole project (interview prep; lives outside `plans/` so it survives cleanup).

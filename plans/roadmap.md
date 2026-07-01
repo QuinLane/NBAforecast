@@ -57,16 +57,44 @@ API + props board UI; **RAPM** (stints → sparse ridge → snapshots, [rapm.md]
 API/UI + RAPM-as-feature wiring.
 **DoD:** all batch heads live with explanations; RAPM leaderboard + props board functional.
 
-### M4 — Live system
+### M3.5 — Stack verification on real data *(added 2026-07-01)*
+The M2 and M3 gates both deferred the real end-to-end run. Before building the live lane on top:
+docker stack up → full-era backfill verified → real training runs → MLflow champion promoted for
+**every** head → browser walkthrough of every page; fix wiring bugs found. Produces the real
+champions that M4.5 and M5's Monte Carlo consume.
+**DoD:** every page renders real predictions + explanations from the dockerized stack; zero 503s.
+
+### M4 — Live system (replay-first)
 Live poller (NBA cdn + ESPN fallback), game-state features, **both** live win-prob models
-(LightGBM + NN, compared), Redis fan-out, **SSE** endpoint, live dashboard + persisted timeline +
-replay ([live-system.md](live-system.md)).
-**DoD:** live dashboard updates during games; tip-off ≈ pre-game prediction; post-game replay works.
+(LightGBM + NN, compared), Redis fan-out, **SSE** endpoint, live dashboard + persisted timeline
+([live-system.md](live-system.md)). **Replay is a first-class design constraint:** an archived-PBP
+source sits behind the same interface as the live feed, so any past game replays through the
+identical pipeline — capped by a curated **famous-games replay library** (5–10 iconic games,
+one-click, timeline scrubber, per-moment win prob + SHAP drivers). Keeps the hero feature demoable
+through the July–October off-season and doubles as the simulation-test harness.
+**DoD:** live dashboard updates during games; tip-off ≈ pre-game prediction; a curated famous game
+replays end-to-end with scrubber + explanations even with no live NBA games on.
+
+### M4.5 — Market benchmark, report card & availability *(added 2026-07-01)*
+Historical closing-odds ingest (free archives ~2007→present) + nightly closing-line capture (The
+Odds API free tier); market backtest job grading persisted predictions vs. closing lines; a
+**public report card** page — nightly-updated honest self-grading (rolling Brier/log-loss vs.
+market, calibration curves, ATS record, props hit rates — losses shown, not hidden). Plus
+**injury/availability ingestion** (official NBA injury report) and availability features with
+leakage tests — the biggest predictive gap, and what closing lines already encode.
+**Framing rule:** "how close does a transparent model get to the most efficient benchmark" —
+calibration and honesty, never implied betting edge.
+**DoD:** report card live on real backtest vs. closing lines; nightly capture running; availability
+features in champions, no-leakage green.
 
 ### M5 — Stats hub & polish
 Shot charts (D3), player/team profiles, stat leaderboards, **how-it-works** (global SHAP),
-SEO + a11y ([frontend.md](frontend.md)).
-**DoD:** full stats hub navigable; SEO metadata + how-it-works page in place.
+SEO + a11y ([frontend.md](frontend.md)). Plus the **Monte Carlo season simulator** (simulate the
+remaining season ~10k× off the game head → playoff/seed/title odds, nightly, fan-chart page),
+**props uncertainty bands** rendered underneath the point estimate (quantile heads already exist),
+and **prediction provenance** in the UI (model version · trained-through date · features as-of).
+**DoD:** full stats hub navigable; SEO metadata + how-it-works page in place; Monte Carlo page
+live; props show bands + provenance.
 
 ### M6 — Hardening & deploy
 Testing completeness (coverage gate + Playwright flow, [testing.md](testing.md)); observability
@@ -78,13 +106,14 @@ full PBP-era history.
 ## 3. Dependency flow
 
 ```
-M0 ─► M1 ─► M2 ⭐ ─► M3 ─► M4 ─► M5 ─► M6
-                └► (M3/M4/M5 each build on the M2 spine; orderable but M2 must come first)
+M0 ─► M1 ─► M2 ⭐ ─► M3 ─► M3.5 ─► M4 ─► M4.5 ─► M5 ─► M6
+                └► (M3+ each build on the M2 spine; M3.5 proves it on real data before the live lane)
 ```
 
 ## 4. v1 "done" definition
 All v1 scope from [master-plan.md §3](master-plan.md) shipped: game prediction (win/margin/total),
-props (4 stats), live win prob, RAPM — all with calibrated, SHAP-explained outputs — plus the stats
+props (4 stats), live win prob, RAPM — all with calibrated, SHAP-explained outputs — plus the
+market benchmark + public report card, famous-games replay, Monte Carlo season odds, and the stats
 hub, deployed publicly, tested, and monitored, retraining nightly on the full PBP-era history.
 
 ## 5. Decisions (resolved 2026-06-28)
@@ -93,3 +122,18 @@ hub, deployed publicly, tested, and monitored, retraining nightly on the full PB
   checkpoint validates extensibility before M3.
 - **Early backfill: full PBP era from M1** — one upfront ingestion cost, realistic data throughout
   development (not a small subset).
+
+## 6. Decisions (resolved 2026-07-01 — portfolio restructure)
+- **M3.5 inserted** — the deferred live-stack verification + first real champion promotions become
+  their own gate before M4 (both M2 and M3 called green without them; the debt stops here).
+- **Betting-market benchmark pulled from v2 into v1 (M4.5)** — historical archives are free; go-
+  forward capture fits The Odds API free tier ($0/mo). Framed strictly as calibration vs. the most
+  efficient public benchmark, never betting edge.
+- **Public report card (M4.5)** — nightly honest self-grading; the glass-box thesis extended from
+  "explain each prediction" to "grade the whole model in public."
+- **Injury/availability features (M4.5)** — biggest predictive gap; required for the market
+  comparison to be meaningful (closing lines already price availability).
+- **Replay-first M4** — archived-PBP source behind the live-feed interface + curated famous-games
+  library, so the live system demos year-round (off-season = July–October).
+- **Monte Carlo season simulator + props uncertainty bands (under the point estimate) +
+  prediction provenance (M5)** — cheap rides on existing heads/MLflow metadata.

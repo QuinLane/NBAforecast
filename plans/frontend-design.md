@@ -127,9 +127,9 @@ player shot-zone summary endpoint. Add under `backend-api.md` players routes.
 
 Turning the approved mockups into the shipping UI, in dependency order:
 
-1. **Foundation** — lock palette + semantic tokens (mint/rose), surfaces, hairlines, glow, type
-   scale into `frontend/src/app/globals.css`; add a global **app shell** (header/nav) in the root
-   layout; retheme the home page to the section-nav language. *(No backend dependency.)*
+1. ✅ **Foundation** (PR #41, `c18c5af`) — tokens rethemed to the palette + `--brand`/`--positive`/
+   `--negative` added (separate from shadcn `--accent`), ambient glow, global `SiteHeader` nav,
+   home page rethemed. *(No backend dependency.)*
 2. **Primitives** — install/settle the shadcn components we hand-rolled (card, table, tabs, badge,
    button) themed to the tokens; extract shared `StatLineCard`, `DenseTable`, `BigStat`.
 3. **Retheme pages** — games, game detail (+ restyle `PredictionExplainer` to the v2 waterfall),

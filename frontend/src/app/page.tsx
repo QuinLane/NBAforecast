@@ -9,12 +9,14 @@ const SECTIONS: { href: string; title: string; blurb: string }[] = [
 
 export default function Home() {
   return (
-    <main className="mx-auto flex max-w-2xl flex-1 flex-col gap-6 p-8">
-      <div className="space-y-2 pt-8">
-        <h1 className="text-4xl font-bold tracking-tight">NBAforecast</h1>
-        <p className="text-muted-foreground max-w-md">
+    <main className="mx-auto flex max-w-2xl flex-1 flex-col gap-8 px-4 py-12">
+      <div className="space-y-3">
+        <h1 className="text-4xl font-extrabold tracking-tight">
+          NBA<span className="text-brand">forecast</span>
+        </h1>
+        <p className="max-w-md text-muted-foreground">
           Explainable NBA predictions — calibrated win probability, player props,
-          and RAPM with SHAP-driven breakdowns.
+          and RAPM, every projection broken down by the factors driving it.
         </p>
       </div>
 
@@ -23,10 +25,12 @@ export default function Home() {
           <Link
             key={section.href}
             href={section.href}
-            className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4 transition-colors hover:bg-zinc-800/60"
+            className="group rounded-xl border border-border bg-card/60 p-4 transition-colors hover:border-brand/50"
           >
-            <div className="font-semibold">{section.title}</div>
-            <div className="text-sm text-zinc-500">{section.blurb}</div>
+            <div className="font-bold transition-colors group-hover:text-brand">
+              {section.title}
+            </div>
+            <div className="mt-0.5 text-sm text-muted-foreground">{section.blurb}</div>
           </Link>
         ))}
       </nav>

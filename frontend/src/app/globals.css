@@ -29,6 +29,12 @@
   --color-destructive: var(--destructive);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
+  /* Brand tokens (frontend-design.md §2). --brand is the magenta "punch" — kept separate from
+     shadcn's --accent (a subtle hover surface) so component semantics stay intact. */
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
+  --color-positive: var(--positive);
+  --color-negative: var(--negative);
   --color-muted-foreground: var(--muted-foreground);
   --color-muted: var(--muted);
   --color-secondary-foreground: var(--secondary-foreground);
@@ -72,7 +78,12 @@
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
+  --radius: 0.75rem;
+  /* Brand palette (frontend-design.md §2) — same in light/dark; the app runs dark-only for now. */
+  --brand: #cb4bac;
+  --brand-foreground: #1a0f2b;
+  --positive: #5fd39a;
+  --negative: #ff5d73;
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
   --sidebar-primary: oklch(0.205 0 0);
@@ -84,29 +95,30 @@
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
+  /* NBAforecast neon-dark theme — frontend-design.md §2. */
+  --background: #06030b;
+  --foreground: #e3dcf5;
+  --card: #120a1f;
+  --card-foreground: #e3dcf5;
+  --popover: #140b22;
+  --popover-foreground: #e3dcf5;
+  --primary: #a58dde;
+  --primary-foreground: #1a0f2b;
+  --secondary: #832786;
+  --secondary-foreground: #f4e9f6;
+  --muted: #1a1226;
+  --muted-foreground: #8f88a6;
+  --accent: #241633; /* subtle hover surface (NOT the brand magenta — that's --brand) */
+  --accent-foreground: #e3dcf5;
+  --destructive: #ff5d73; /* = --negative */
+  --border: rgba(165, 141, 222, 0.16);
+  --input: rgba(165, 141, 222, 0.16);
+  --ring: #a58dde;
+  --chart-1: #cb4bac;
+  --chart-2: #a58dde;
+  --chart-3: #832786;
+  --chart-4: #5fd39a;
+  --chart-5: #ff5d73;
   --sidebar: oklch(0.205 0 0);
   --sidebar-foreground: oklch(0.985 0 0);
   --sidebar-primary: oklch(0.488 0.243 264.376);
@@ -122,7 +134,12 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    /* Ambient magenta/purple glow — frontend-design.md §2 "energy, dialed down". */
+    background-image:
+      radial-gradient(120% 80% at 85% -10%, rgba(203, 75, 172, 0.1), transparent 55%),
+      radial-gradient(90% 70% at 3% 0%, rgba(131, 39, 134, 0.12), transparent 50%);
+    background-attachment: fixed;
   }
   html {
     @apply font-sans;

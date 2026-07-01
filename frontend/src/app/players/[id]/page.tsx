@@ -1,0 +1,180 @@
+"use client";
+
+import { use } from "react";
+import Link from "next/link";
+import { usePlayer, usePlayerProps, usePlayerRapm } from "@/lib/hooks";
+
+const STAT_LABELS: Record<string, string> = {
+  pts: "Points",
+  reb: "Rebounds",
+  ast: "Assists",
+  fg3m: "3-Pointers",
+};
+
+function PropsBoard({ playerId, gameId }: { playerId: number; gameId: string }) {
+  const { data, isPending, isError } = usePlayerProps(playerId, gameId);
+
+  if (isPending) {
+    return <div className="h-24 rounded-lg bg-zinc-800/50 animate-pulse" />;
+  }
+  if (isError || !data || data.length === 0) {
+    return (
+      <p className="text-sm text-zinc-500">
+        Projections unavailable (no props champion loaded yet).
+      </p>
+    );
+  }
+  return (
+    <div className="grid grid-cols-2 gap-2">
+      {data.map((p) => {
+        const topDriver = p.explanation.contributions[0];
+        return (
+          <div
+            key={p.stat}
+            className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-3 space-y-1"
+          >
+            <div className="text-xs text-zinc-500">
+              {STAT_LABELS[p.stat] ?? p.stat}
+            </div>
+            <div className="flex items-baseline gap-1">
+              <span className="text-2xl font-bold font-mono">
+                {p.point.toFixed(1)}
+              </span>
+              <span className="text-xs text-zinc-600 font-mono">
+                [{p.interval_low.toFixed(0)}–{p.interval_high.toFixed(0)}]
+              </span>
+            </div>
+            {topDriver && (
+              <div className="text-[11px] text-zinc-500 truncate">
+                {topDriver.direction === "up" ? "▲" : "▼"}{" "}
+                {topDriver.display_label}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+export default function PlayerDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = use(params);
+  const playerId = Number(id);
+  const playerQ = usePlayer(playerId);
+  const rapmQ = usePlayerRapm(playerId);
+
+  const player = playerQ.data;
+  const latestGame = player?.recent_games[0]?.game_id ?? "";
+  const latestRapm = rapmQ.data?.[rapmQ.data.length - 1];
+
+  if (playerQ.isError) {
+    return (
+      <main className="p-8 text-center text-zinc-400">
+        Player not found.{" "}
+        <Link href="/players" className="underline">
+          Back to players
+        </Link>
+      </main>
+    );
+  }
+
+  return (
+    <main className="max-w-2xl mx-auto px-4 py-8 space-y-6">
+      <Link
+        href="/players"
+        className="text-sm text-zinc-500 hover:text-zinc-300 transition-colors"
+      >
+        ← All players
+      </Link>
+
+      {playerQ.isPending ? (
+        <div className="h-20 rounded-xl bg-zinc-800/50 animate-pulse" />
+      ) : player ? (
+        <section className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-5 space-y-1">
+          <h1 className="text-2xl font-bold tracking-tight">
+            {player.full_name}
+          </h1>
+          <p className="text-sm text-zinc-500">
+            {[
+              player.position,
+              player.height_inches ? `${player.height_inches}"` : null,
+              player.weight_lbs ? `${player.weight_lbs} lb` : null,
+            ]
+              .filter(Boolean)
+              .join(" · ")}
+          </p>
+          {latestRapm && (
+            <p className="text-sm text-zinc-400 pt-1">
+              RAPM{" "}
+              <span className="font-mono font-semibold text-emerald-400">
+                {latestRapm.rapm?.toFixed(2) ?? "—"}
+              </span>{" "}
+              <span className="text-xs text-zinc-600">
+                (O {latestRapm.orapm?.toFixed(2) ?? "—"} / D{" "}
+                {latestRapm.drapm?.toFixed(2) ?? "—"})
+              </span>
+            </p>
+          )}
+        </section>
+      ) : null}
+
+      {/* Props projections for the player's most recent game */}
+      {latestGame && (
+        <section className="space-y-2">
+          <h2 className="text-sm font-semibold text-zinc-300">
+            Projected props
+            <span className="text-xs text-zinc-600 font-normal">
+              {" "}
+              · game {latestGame}
+            </span>
+          </h2>
+          <PropsBoard playerId={playerId} gameId={latestGame} />
+        </section>
+      )}
+
+      {/* Recent game logs */}
+      {player && player.recent_games.length > 0 && (
+        <section className="space-y-2">
+          <h2 className="text-sm font-semibold text-zinc-300">Recent games</h2>
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left text-xs text-zinc-500 border-b border-zinc-800">
+                <th className="py-2 pr-2 font-medium">Date</th>
+                <th className="py-2 px-2 font-medium text-right">MIN</th>
+                <th className="py-2 px-2 font-medium text-right">PTS</th>
+                <th className="py-2 px-2 font-medium text-right">REB</th>
+                <th className="py-2 px-2 font-medium text-right">AST</th>
+                <th className="py-2 pl-2 font-medium text-right">3PM</th>
+              </tr>
+            </thead>
+            <tbody className="font-mono tabular-nums">
+              {player.recent_games.map((g) => (
+                <tr
+                  key={g.game_id}
+                  className="border-b border-zinc-900 hover:bg-zinc-900/50"
+                >
+                  <td className="py-2 pr-2 text-zinc-400 font-sans">
+                    <Link href={`/games/${g.game_id}`} className="hover:underline">
+                      {g.game_date}
+                    </Link>
+                  </td>
+                  <td className="py-2 px-2 text-right text-zinc-500">
+                    {g.min == null ? "—" : g.min.toFixed(0)}
+                  </td>
+                  <td className="py-2 px-2 text-right">{g.pts}</td>
+                  <td className="py-2 px-2 text-right">{g.reb}</td>
+                  <td className="py-2 px-2 text-right">{g.ast}</td>
+                  <td className="py-2 pl-2 text-right">{g.fg3m}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
+      )}
+    </main>
+  );
+}

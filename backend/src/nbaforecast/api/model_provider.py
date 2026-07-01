@@ -15,17 +15,27 @@ import pandas as pd
 
 from nbaforecast.explain.schema import Explanation
 from nbaforecast.models.base import ModelHead
+from nbaforecast.models.game_prediction.margin import LightGBMMarginHead
+from nbaforecast.models.game_prediction.total import LightGBMTotalHead
 from nbaforecast.models.game_prediction.win_prob import LightGBMWinProbHead
+from nbaforecast.models.props.regressor import PropsRegressorHead
 from nbaforecast.training import registry
 
 logger = logging.getLogger(__name__)
 
 # head name -> the ModelHead instance that knows how to predict()/explain() with that head's
 # champion artifact. The MLflow registry only stores the *fitted model* (a joblib blob); the
-# head class (design-matrix selection, explain logic) is looked up here by name. Only the
-# game-win head exists as of M2 — props/RAPM/live heads register here as they land (T3.x/T4.x).
+# head class (design-matrix selection, explain logic) is looked up here by name. The game-win
+# head landed in M2; the M3 batch heads (margin/total regressors, props per stat) register here
+# too — the API serves whichever have a champion promoted, and gracefully skips the rest.
 HEAD_REGISTRY: dict[str, ModelHead[Any]] = {
     "game_win": LightGBMWinProbHead(),
+    "game_margin": LightGBMMarginHead(),
+    "game_total": LightGBMTotalHead(),
+    "props_pts": PropsRegressorHead("pts"),
+    "props_reb": PropsRegressorHead("reb"),
+    "props_ast": PropsRegressorHead("ast"),
+    "props_fg3m": PropsRegressorHead("fg3m"),
 }
 
 

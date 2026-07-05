@@ -46,6 +46,9 @@ class Settings(BaseSettings):
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
         "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
     )
+    # Route stats.nba.com through a Chrome-impersonated TLS handshake (curl_cffi). Akamai
+    # stalls non-browser fingerprints (verified 2026-07-05); harmless when not blocked.
+    ingest_impersonate: bool = True
     # Local cache directory pbpstats writes raw responses into.
     pbpstats_cache_dir: str = "data/pbpstats_cache"
     # Root of the silver Parquet analytical store (partitioned by season_start_year).

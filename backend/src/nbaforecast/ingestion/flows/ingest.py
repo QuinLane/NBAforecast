@@ -44,14 +44,29 @@ async def ingest_game_task(meta: GameMeta) -> None:
 
 
 async def _run_games(metas: list[GameMeta]) -> list[GameMeta]:
-    """Ingest the games not already complete; returns the ones actually processed."""
+    """Ingest the games not already complete; returns the ones that actually succeeded.
+
+    A game that still fails after the task's retries is logged and skipped rather than
+    failing the whole season (seen live at M3.5: one malformed boxscore payload killed a
+    1,225-game backfill). Failed games stay un-checkpointed, so the next run retries them.
+    """
     async with get_sessionmaker()() as session:
         complete = await list_complete_games(session, [m.game_id for m in metas])
     pending = [m for m in metas if m.game_id not in complete]
     logger.info("%d games pending of %d", len(pending), len(metas))
+    failed: list[str] = []
     for meta in pending:
-        await ingest_game_task(meta)
-    return pending
+        try:
+            await ingest_game_task(meta)
+        except Exception:
+            logger.exception(
+                "game %s failed after retries; continuing (next run will retry it)",
+                meta.game_id,
+            )
+            failed.append(meta.game_id)
+    if failed:
+        logger.warning("%d game(s) failed this run: %s", len(failed), failed)
+    return [m for m in pending if m.game_id not in set(failed)]
 
 
 @flow(name="backfill-season")

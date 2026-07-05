@@ -70,6 +70,11 @@ def _execute(factory: Callable[[], JsonDict]) -> JsonDict:
     except json.JSONDecodeError as exc:
         # Rate-limit / maintenance pages return HTML; treat as transient and back off.
         raise TransientIngestionError("non-JSON response from stats.nba.com") from exc
+    except (KeyError, TypeError) as exc:
+        # nba_api itself crashes when an error payload lacks resultSets (KeyError
+        # 'resultSet', seen live at M3.5 on boxscoreadvancedv2) — same transient server
+        # garbage as the HTML case above, just in JSON clothing.
+        raise TransientIngestionError(f"malformed stats.nba.com payload: {exc!r}") from exc
 
 
 def fetch_schedule(

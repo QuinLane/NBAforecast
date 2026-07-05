@@ -22,6 +22,7 @@ from nba_api.stats.endpoints import (
 
 from nbaforecast.config.settings import get_settings
 from nbaforecast.errors import IngestionError, RateLimitError, TransientIngestionError
+from nbaforecast.ingestion.clients.impersonate import install_impersonated_transport
 from nbaforecast.ingestion.clients.retrying import retry
 from nbaforecast.ingestion.clients.throttle import get_throttle
 
@@ -52,6 +53,8 @@ def stats_headers() -> dict[str, str]:
 @retry
 def _execute(factory: Callable[[], JsonDict]) -> JsonDict:
     """Throttle, run an endpoint factory, and map transient failures for retry."""
+    if get_settings().ingest_impersonate:
+        install_impersonated_transport()
     get_throttle().wait()
     try:
         return factory()

@@ -18,6 +18,7 @@ from nbaforecast.ingestion.pipeline import (
     ingest_schedule,
     season_for_date,
 )
+from nbaforecast.ingestion.seed import seed_reference_tables
 from nbaforecast.storage.database import get_sessionmaker
 from nbaforecast.storage.object_store import ObjectStore
 
@@ -59,6 +60,7 @@ async def backfill_season(season: str, season_type: str = "Regular Season") -> i
     store = ObjectStore()
     store.ensure_bucket()
     async with get_sessionmaker()() as session:
+        await seed_reference_tables(session)
         metas = await ingest_schedule(session, store, season, season_type)
         await session.commit()
     return len(await _run_games(metas))
@@ -78,6 +80,7 @@ async def ingest_daily(day: str | None = None) -> int:
     store = ObjectStore()
     store.ensure_bucket()
     async with get_sessionmaker()() as session:
+        await seed_reference_tables(session)
         metas = await ingest_schedule(session, store, season, date_from=stamp, date_to=stamp)
         await session.commit()
     processed = await _run_games(metas)

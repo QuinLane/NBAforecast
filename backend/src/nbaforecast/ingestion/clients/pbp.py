@@ -19,6 +19,7 @@ from pbpstats.resources.enhanced_pbp.free_throw import FreeThrow
 
 from nbaforecast.config.settings import get_settings
 from nbaforecast.errors import IngestionError, TransientIngestionError
+from nbaforecast.ingestion.clients.impersonate import install_impersonated_transport
 from nbaforecast.ingestion.clients.retrying import retry
 from nbaforecast.ingestion.clients.throttle import get_throttle
 
@@ -79,6 +80,8 @@ def _possession_dict(possession: Any) -> JsonDict | None:
 @retry
 def fetch_possessions(game_id: str) -> list[JsonDict]:
     """Return clean possession dicts (period, clock, teams, points, lineups) for a game."""
+    if get_settings().ingest_impersonate:
+        install_impersonated_transport()
     get_throttle().wait()
     try:
         game = _client().Game(game_id)

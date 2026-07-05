@@ -142,3 +142,22 @@ async def test_corrupt_batch_is_quarantined_and_raises(case: Case) -> None:
         )
     assert len(store.quarantined) == 1
     assert session.executed == []  # nothing loaded to the DB
+
+
+def test_parse_games_skips_contradictory_matchup_rows() -> None:
+    """A game whose two rows are both away-shaped (real NBA data bug, e.g. 0022500147 in
+    2025-26: "DET @ DAL" AND "DAL @ DET") is dropped with a warning, not fatal."""
+    raw = _load("schedule.json")
+    result_set = next(rs for rs in raw["resultSets"] if rs["name"] == "LeagueGameLog")
+    matchup_idx = result_set["headers"].index("MATCHUP")
+    game_idx = result_set["headers"].index("GAME_ID")
+    home_row = next(r for r in result_set["rowSet"] if " vs. " in r[matchup_idx])
+    bad_game_id = home_row[game_idx]
+    home_row[matchup_idx] = home_row[matchup_idx].replace(" vs. ", " @ ")
+
+    games = parse_games(raw)
+
+    total_games = len({r[game_idx] for r in result_set["rowSet"]})
+    assert len(games) == total_games - 1
+    if not games.empty:
+        assert bad_game_id not in set(games["game_id"])

@@ -8,14 +8,16 @@ Note: the exact NBA result-set headers are confirmed against live data at T1.7; 
 follow the long-documented stats.nba.com schemas.
 """
 
+import logging
 import math
 from datetime import date
 from typing import Any
 
 import pandas as pd
 
-from nbaforecast.errors import IngestionError
 from nbaforecast.ingestion.result_sets import result_set_records
+
+logger = logging.getLogger(__name__)
 
 JsonDict = dict[str, Any]
 
@@ -89,9 +91,14 @@ def parse_games(schedule_raw: JsonDict) -> pd.DataFrame:
         by_game.setdefault(game_id, {})[side] = row
 
     rows: list[dict[str, Any]] = []
+    skipped: list[str] = []
     for game_id, sides in by_game.items():
         if "home" not in sides or "away" not in sides:
-            raise IngestionError(f"game {game_id} missing home or away row in schedule")
+            # NBA source-data bug (seen live at M3.5: 0022500147 carries "DET @ DAL" AND
+            # "DAL @ DET" — both rows away-shaped). The payload is self-contradictory, so
+            # home/away is underivable; drop the game loudly rather than fail the season.
+            skipped.append(game_id)
+            continue
         home, away = sides["home"], sides["away"]
         season, start_year, season_type = season_from_id(home["SEASON_ID"])
         rows.append(
@@ -109,6 +116,13 @@ def parse_games(schedule_raw: JsonDict) -> pd.DataFrame:
                 "status": "final",
                 "num_periods": 4,
             }
+        )
+    if skipped:
+        logger.warning(
+            "skipping %d game(s) with contradictory home/away MATCHUP rows "
+            "(NBA source-data bug): %s",
+            len(skipped),
+            skipped,
         )
     return pd.DataFrame(rows)
 

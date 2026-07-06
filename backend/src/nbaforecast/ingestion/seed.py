@@ -22,17 +22,59 @@ from nbaforecast.storage.repositories import upsert_rows
 logger = logging.getLogger(__name__)
 
 
+# Home-city coordinates per franchise (city-center approximations — the travel-distance and
+# timezone features operate at flight scale, where ±20 km is noise). nba_api's static data
+# carries no coordinates, so these are maintained here.
+_CITY_COORDS: dict[str, tuple[float, float]] = {
+    "ATL": (33.75, -84.39),
+    "BOS": (42.36, -71.06),
+    "BKN": (40.68, -73.97),
+    "CHA": (35.23, -80.84),
+    "CHI": (41.88, -87.63),
+    "CLE": (41.50, -81.69),
+    "DAL": (32.78, -96.80),
+    "DEN": (39.74, -104.99),
+    "DET": (42.33, -83.05),
+    "GSW": (37.77, -122.42),
+    "HOU": (29.76, -95.37),
+    "IND": (39.77, -86.16),
+    "LAC": (34.05, -118.24),
+    "LAL": (34.05, -118.24),
+    "MEM": (35.15, -90.05),
+    "MIA": (25.76, -80.19),
+    "MIL": (43.04, -87.91),
+    "MIN": (44.98, -93.27),
+    "NOP": (29.95, -90.07),
+    "NYK": (40.75, -73.99),
+    "OKC": (35.47, -97.52),
+    "ORL": (28.54, -81.38),
+    "PHI": (39.95, -75.17),
+    "PHX": (33.45, -112.07),
+    "POR": (45.52, -122.68),
+    "SAC": (38.58, -121.49),
+    "SAS": (29.42, -98.49),
+    "TOR": (43.65, -79.38),
+    "UTA": (40.76, -111.89),
+    "WAS": (38.90, -77.04),
+}
+
+
 def _team_rows() -> list[dict[str, Any]]:
-    return [
-        {
-            "team_id": team["id"],
-            "abbreviation": team["abbreviation"],
-            "full_name": team["full_name"],
-            "city": team["city"],
-            "nickname": team["nickname"],
-        }
-        for team in static_teams.get_teams()
-    ]
+    rows = []
+    for team in static_teams.get_teams():
+        lat, lon = _CITY_COORDS.get(team["abbreviation"], (None, None))
+        rows.append(
+            {
+                "team_id": team["id"],
+                "abbreviation": team["abbreviation"],
+                "full_name": team["full_name"],
+                "city": team["city"],
+                "nickname": team["nickname"],
+                "arena_lat": lat,
+                "arena_lon": lon,
+            }
+        )
+    return rows
 
 
 def _player_rows() -> list[dict[str, Any]]:

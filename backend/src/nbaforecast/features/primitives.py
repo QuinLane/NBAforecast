@@ -128,7 +128,11 @@ def schedule_density(
 
 
 def _haversine_km(lat1: pd.Series, lon1: pd.Series, lat2: pd.Series, lon2: pd.Series) -> pd.Series:
-    lat1_r, lon1_r, lat2_r, lon2_r = (np.radians(s) for s in (lat1, lon1, lat2, lon2))
+    # Reference rows may carry NULL coordinates (→ object-dtype None, on which np.radians
+    # crashes); coerce so missing coords yield NaN distances instead (M3.5).
+    lat1_r, lon1_r, lat2_r, lon2_r = (
+        np.radians(pd.to_numeric(s, errors="coerce")) for s in (lat1, lon1, lat2, lon2)
+    )
     dlat = lat2_r - lat1_r
     dlon = lon2_r - lon1_r
     a = np.sin(dlat / 2) ** 2 + np.cos(lat1_r) * np.cos(lat2_r) * np.sin(dlon / 2) ** 2

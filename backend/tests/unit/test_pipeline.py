@@ -42,8 +42,13 @@ async def test_ingest_game_loads_every_entity(
 ) -> None:
     monkeypatch.setattr(pl, "fetch_boxscore", lambda gid: {"box": 1})
     monkeypatch.setattr(pl, "fetch_pbp", lambda gid: {"pbp": 1})
-    monkeypatch.setattr(pl, "fetch_shots", lambda gid, season=None: {"shots": 1})
+    monkeypatch.setattr(pl, "fetch_shots", lambda gid, season=None, season_type=None: {"shots": 1})
     monkeypatch.setattr(pl, "fetch_possessions", lambda gid: [{"p": 1}])
+
+    async def fake_ensure_players(session, box_raw):
+        return 0
+
+    monkeypatch.setattr(pl, "ensure_players_from_boxscore", fake_ensure_players)
     df = pd.DataFrame([{"x": 1}])
     monkeypatch.setattr(pl, "parse_team_game_stats", lambda raw, home: df)
     monkeypatch.setattr(pl, "parse_player_game_stats", lambda raw, home: df)
@@ -78,7 +83,10 @@ async def test_ingest_schedule_returns_metas(
         pl,
         "parse_games",
         lambda raw: pd.DataFrame(
-            [{"game_id": "g1", "home_team_id": 10}, {"game_id": "g2", "home_team_id": 20}]
+            [
+                {"game_id": "g1", "home_team_id": 10, "season_type": "Regular Season"},
+                {"game_id": "g2", "home_team_id": 20, "season_type": "Playoffs"},
+            ]
         ),
     )
     store = FakeStore()

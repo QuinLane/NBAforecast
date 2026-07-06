@@ -10,11 +10,18 @@ to the same stint only if both the offense five and the defense five are identic
 the ``off_player_ids``/``def_player_ids`` arrays is not meaningful — see
 ``storage/models/silver.py::Possession``). A change of offense/defense team, a substitution, a new
 period, or a new game always starts a new stint.
+
+Possessions whose lineups aren't exactly 5-on-5 are skipped with a warning: the cdn liveData
+source occasionally under-resolves lineups around substitutions (~4% of 2025-26 possessions,
+found live at M3.5), and a ridge fit over the clean 96% beats crashing on the noise.
 """
 
+import logging
 from dataclasses import dataclass
 
 import pandas as pd
+
+logger = logging.getLogger(__name__)
 
 _LINEUP_SIZE = 5
 
@@ -37,9 +44,10 @@ class Stint:
     possessions: int
 
 
-def _lineup_key(player_ids: list[int] | tuple[int, ...]) -> tuple[int, ...]:
+def _lineup_key(player_ids: list[int] | tuple[int, ...]) -> tuple[int, ...] | None:
+    """Sorted lineup tuple, or ``None`` when the lineup isn't exactly five players."""
     if len(player_ids) != _LINEUP_SIZE:
-        raise ValueError(f"expected {_LINEUP_SIZE} players on court, got {len(player_ids)}")
+        return None
     return tuple(sorted(int(p) for p in player_ids))
 
 
@@ -67,6 +75,7 @@ def build_stints(possessions: pd.DataFrame) -> list[Stint]:
 
     stints: list[Stint] = []
     current: Stint | None = None
+    skipped = 0
 
     for record in ordered.to_dict("records"):
         game_id = str(record["game_id"])
@@ -75,6 +84,11 @@ def build_stints(possessions: pd.DataFrame) -> list[Stint]:
         defense_team_id = int(record["defense_team_id"])
         off_key = _lineup_key(record["off_player_ids"])
         def_key = _lineup_key(record["def_player_ids"])
+        if off_key is None or def_key is None:
+            # A malformed possession also breaks the run — don't merge across it.
+            current = None
+            skipped += 1
+            continue
         points = int(record["points"])
 
         same_stint = current is not None and (
@@ -101,6 +115,8 @@ def build_stints(possessions: pd.DataFrame) -> list[Stint]:
             )
             stints.append(current)
 
+    if skipped:
+        logger.warning("skipped %d of %d possessions with non-5-man lineups", skipped, len(ordered))
     return stints
 
 

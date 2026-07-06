@@ -155,7 +155,10 @@ POSSESSIONS_SCHEMA = pa.DataFrameSchema(
         "end_seconds": _nonneg_int(nullable=True),
         "offense_team_id": pa.Column(int, coerce=True),
         "defense_team_id": pa.Column(int, coerce=True),
-        "points": pa.Column(int, pa.Check.in_range(0, 6), coerce=True),
+        # A possession survives offensive rebounds, so points routinely exceed one scoring
+        # play (3 + oreb + 3 + FTs…). 7-point possessions occur in real data (M3.5); 20 is a
+        # generous sanity ceiling, not a rules bound.
+        "points": pa.Column(int, pa.Check.in_range(0, 20), coerce=True),
         "off_player_ids": pa.Column(object, pa.Check(_is_list, element_wise=False)),
         "def_player_ids": pa.Column(object, pa.Check(_is_list, element_wise=False)),
     },

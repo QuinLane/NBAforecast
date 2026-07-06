@@ -98,7 +98,7 @@
 | period | INT | |
 | pc_time | VARCHAR | raw game clock "MM:SS" |
 | seconds_remaining_period | INT | parsed |
-| event_msg_type, event_action_type | INT | NBA event codes |
+| action_type, sub_type | TEXT | v3 action strings (replaced v2 int event codes when the NBA retired v2 endpoints; migration 0003) |
 | description | TEXT | |
 | home_score, away_score | INT | running score |
 | player1_id, player2_id, player3_id | BIGINT NULL | |

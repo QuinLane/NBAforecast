@@ -25,7 +25,8 @@ from curl_cffi import requests as curl_requests
 
 logger = logging.getLogger(__name__)
 
-IMPERSONATED_HOSTS = frozenset({"stats.nba.com"})
+# cdn.nba.com serves pbpstats' "live" provider (possessions) and 403s plain clients too.
+IMPERSONATED_HOSTS = frozenset({"stats.nba.com", "cdn.nba.com"})
 IMPERSONATE_PROFILE: Final = "chrome"
 
 _lock = threading.Lock()

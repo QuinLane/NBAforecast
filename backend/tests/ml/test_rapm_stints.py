@@ -116,3 +116,29 @@ def test_stints_to_dataframe_round_trip() -> None:
     assert df.iloc[0]["points"] == 2
     assert df.iloc[0]["possessions"] == 1
     assert set(df.iloc[0]["off_player_ids"]) == set(LINEUP_A_OFF)
+
+
+def test_build_stints_skips_non_five_man_lineups() -> None:
+    """cdn liveData under-resolves ~4% of lineups (M3.5): skip them, break the run, count on."""
+    import pandas as pd
+
+    rows = [
+        {
+            "game_id": "g1",
+            "period": 1,
+            "start_seconds": 700 - i,
+            "offense_team_id": 1,
+            "defense_team_id": 2,
+            "points": 2,
+            "off_player_ids": [1, 2, 3, 4, 5],
+            "def_player_ids": [6, 7, 8, 9, 10],
+        }
+        for i in range(3)
+    ]
+    rows[1]["off_player_ids"] = [1, 2, 3, 4]  # malformed middle possession
+
+    stints = build_stints(pd.DataFrame(rows))
+
+    # The bad possession is skipped AND splits the run: two 1-possession stints, not one of 3.
+    assert [s.possessions for s in stints] == [1, 1]
+    assert all(len(s.off_player_ids) == 5 for s in stints)

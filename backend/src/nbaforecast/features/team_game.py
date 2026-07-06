@@ -212,9 +212,16 @@ _TZ_LON_BANDS = ([-87.0, -5], [-102.0, -6], [-115.0, -7])
 
 
 def _utc_offset_hours(lon: pd.Series) -> pd.Series:
+    # Coerce first: NULL reference coordinates arrive as object-dtype None (M3.5), which
+    # band comparisons can't handle; missing longitude yields NaN offset (imputed later),
+    # not a fake west-coast default.
+    lon = pd.to_numeric(lon, errors="coerce")
     conditions = [lon > threshold for threshold, _ in _TZ_LON_BANDS]
     choices = [hours for _, hours in _TZ_LON_BANDS]
-    return pd.Series(np.select(conditions, choices, default=-8), index=lon.index, dtype="float64")
+    offsets = pd.Series(
+        np.select(conditions, choices, default=-8), index=lon.index, dtype="float64"
+    )
+    return offsets.where(lon.notna())
 
 
 def _attach_rest_schedule_travel(df: pd.DataFrame) -> pd.DataFrame:

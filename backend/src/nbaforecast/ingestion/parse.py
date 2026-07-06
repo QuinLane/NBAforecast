@@ -375,6 +375,22 @@ def parse_possessions(possessions: list[JsonDict], game_id: str) -> pd.DataFrame
                 "def_player_ids": [int(x) for x in p["def_player_ids"]],
             }
         )
+    if not rows:
+        # Same guard as parse_shots: zero possessions (e.g. pbpstats couldn't resolve OT
+        # starters) must validate as an empty frame, not fail on missing columns.
+        return pd.DataFrame(
+            columns=[
+                "game_id",
+                "period",
+                "start_seconds",
+                "end_seconds",
+                "offense_team_id",
+                "defense_team_id",
+                "points",
+                "off_player_ids",
+                "def_player_ids",
+            ]
+        )
     return pd.DataFrame(rows)
 
 

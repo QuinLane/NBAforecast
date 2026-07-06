@@ -17,6 +17,7 @@ from pbpstats.client import Client
 from pbpstats.resources.enhanced_pbp.field_goal import FieldGoal
 from pbpstats.resources.enhanced_pbp.free_throw import FreeThrow
 from pbpstats.resources.enhanced_pbp.live.enhanced_pbp_item import LiveEnhancedPbpItem
+from pbpstats.resources.enhanced_pbp.start_of_period import InvalidNumberOfStartersException
 
 from nbaforecast.config.settings import get_settings
 from nbaforecast.errors import IngestionError, TransientIngestionError
@@ -102,6 +103,13 @@ def fetch_possessions(game_id: str) -> list[JsonDict]:
     try:
         game = _client().Game(game_id)
         return [d for p in game.possessions.items if (d := _possession_dict(p)) is not None]
+    except InvalidNumberOfStartersException as exc:
+        # pbpstats can't always derive period starters from pbp alone (seen live at M3.5 on
+        # an OT period). Losing one game's possessions is negligible for RAPM; losing the
+        # game's boxscore/pbp/shots to an all-or-nothing rollback is not — so warn and land
+        # the game without possessions.
+        logger.warning("no possessions for %s (unresolvable starters): %s", game_id, exc)
+        return []
     except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as exc:
         raise TransientIngestionError(f"pbpstats connection error: {exc}") from exc
     except requests.exceptions.HTTPError as exc:

@@ -28,6 +28,7 @@ from nbaforecast.ingestion.parse import (
     parse_shots,
     parse_team_game_stats,
 )
+from nbaforecast.ingestion.seed import ensure_players_from_boxscore
 from nbaforecast.storage.object_store import ObjectStore
 
 logger = logging.getLogger(__name__)
@@ -100,6 +101,9 @@ async def ingest_game(session: AsyncSession, store: ObjectStore, meta: GameMeta)
 
     box_raw = fetch_boxscore(gid)
     store.put_raw(STATS_SOURCE, "boxscore", season, gid, box_raw)
+    # Players who debuted after nba_api's static index (rookies, two-way signings) would
+    # FK-violate player_game_stats — seed them from the boxscore itself (self-healing).
+    await ensure_players_from_boxscore(session, box_raw)
     await load_silver(
         session,
         store,

@@ -53,3 +53,35 @@ async def seed_reference_tables(session: AsyncSession) -> tuple[int, int]:
     player_count = await upsert_rows(session, Player, _player_rows(), ("player_id",))
     logger.info("seeded reference tables: %d teams, %d players", team_count, player_count)
     return team_count, player_count
+
+
+def _players_from_v3_boxscore(boxscore_raw: dict[str, Any]) -> list[dict[str, Any]]:
+    root = boxscore_raw["traditional"]["boxScoreTraditional"]
+    rows: list[dict[str, Any]] = []
+    for side in ("homeTeam", "awayTeam"):
+        for player in root[side].get("players", []):
+            first = player.get("firstName") or None
+            last = player.get("familyName") or None
+            full = " ".join(part for part in (first, last) if part)
+            rows.append(
+                {
+                    "player_id": int(player["personId"]),
+                    "full_name": full or str(player["personId"]),
+                    "first_name": first,
+                    "last_name": last,
+                }
+            )
+    return rows
+
+
+async def ensure_players_from_boxscore(session: AsyncSession, boxscore_raw: dict[str, Any]) -> int:
+    """Upsert every player appearing in a v3 boxscore into ``players``.
+
+    The static index (:func:`seed_reference_tables`) is frozen at nba_api's release date, so
+    players who debuted after it (rookies, two-way signings) FK-violate
+    ``player_game_stats`` — found live at M3.5 with 2025-26 rookies. The boxscore itself is
+    the authoritative roster source, so seeding from it is self-healing for any era.
+    """
+    return await upsert_rows(
+        session, Player, _players_from_v3_boxscore(boxscore_raw), ("player_id",)
+    )

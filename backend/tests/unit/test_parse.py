@@ -285,3 +285,21 @@ def test_parse_possessions() -> None:
     assert row["offense_team_id"] == LAL
     assert row["points"] == 2
     assert row["off_player_ids"] == [1, 2, 3, 4, 5]
+
+
+def test_players_from_v3_boxscore_covers_both_teams() -> None:
+    """ensure_players_from_boxscore's row builder: every roster player, id + name mapped."""
+    import json
+    from pathlib import Path
+
+    from nbaforecast.ingestion.seed import _players_from_v3_boxscore
+
+    fixture = Path(__file__).resolve().parents[1] / "fixtures" / "boxscore.json"
+    raw = json.loads(fixture.read_text())
+    rows = _players_from_v3_boxscore(raw)
+
+    root = raw["traditional"]["boxScoreTraditional"]
+    expected = sum(len(root[s]["players"]) for s in ("homeTeam", "awayTeam"))
+    assert len(rows) == expected > 0
+    assert all(isinstance(r["player_id"], int) for r in rows)
+    assert all(r["full_name"] for r in rows)

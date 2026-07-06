@@ -56,6 +56,45 @@ A few design choices worth calling out:
 - New models plug into a shared feature pipeline and a common interface, so adding one doesn't mean
   rewiring everything around it.
 
+## How the ML actually works, in plain English
+
+If you're new to machine learning, everything below boils down to one idea: **learning from
+examples with known answers** (supervised learning). Every training example has two parts:
+
+- **Features** — everything we know *before* a game: rest days, Elo rating, rolling form,
+  home court, a player's recent minutes and usage, and so on. These are the inputs.
+- **Label** — the thing we're trying to predict, known only *after* the game. This is the
+  answer key, and each model has exactly one:
+
+| Model | Its label (the "answer" it trains against) |
+|-------|--------------------------------------------|
+| Win probability | Did this team win — `1` or `0` |
+| Point margin | This team's final score differential (e.g. `+7`) |
+| Total points | The combined final score (e.g. `221`) |
+| Player props (×4) | The player's actual PTS / REB / AST / 3PM that night |
+
+Training means showing the model thousands of past `(features → label)` pairs and letting it
+find the patterns that connect them. What comes out isn't "knowledge" — it's a function. Feed
+it tonight's pre-game feature row and it outputs, say, `0.64`, because historically teams that
+looked like *this* won about 64% of the time.
+
+The literal goal of training is minimizing a **loss function** — a number measuring how wrong
+the model currently is. The win model minimizes *log-loss*, which punishes confident wrong
+answers far more than humble ones, so honesty is baked into the objective itself. The
+margin/total/props models minimize prediction error in points.
+
+Two honesty rules sit above the math. **Calibration:** when the model says 70%, those teams
+must actually win about 70% of the time — a model can rank games well and still exaggerate,
+and we test for that. **No peeking:** models are evaluated walk-forward only (train on the
+past, predict the future), because sports data makes it embarrassingly easy to leak the
+answer into the inputs by accident. A newly trained model replaces the serving one only if
+it beats it out-of-sample *without* making the probabilities less honest.
+
+RAPM is the exception to all of the above: it isn't predicting a future event. It's a
+regression over hundreds of thousands of possessions that isolates each player's independent
+scoring impact from everyone they share the floor with — a player *rating*, which then feeds
+back into the predictive models as a feature. Details on every model below.
+
 ## Models
 
 The prediction engine is split into four independent heads that share a single upstream feature

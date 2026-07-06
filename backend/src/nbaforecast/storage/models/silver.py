@@ -136,12 +136,15 @@ class PlayByPlay(CreatedAtMixin, Base):
     period: Mapped[int] = mapped_column(Integer, nullable=False)
     pc_time: Mapped[str | None] = mapped_column(String)
     seconds_remaining_period: Mapped[int | None] = mapped_column(Integer)
-    event_msg_type: Mapped[int | None] = mapped_column(Integer)
-    event_action_type: Mapped[int | None] = mapped_column(Integer)
+    # v3 action strings (e.g. "Made Shot" / "Jump Shot"); replaced v2's integer codes (0003).
+    action_type: Mapped[str | None] = mapped_column(String)
+    sub_type: Mapped[str | None] = mapped_column(String)
     description: Mapped[str | None] = mapped_column(Text)
     home_score: Mapped[int | None] = mapped_column(Integer)
     away_score: Mapped[int | None] = mapped_column(Integer)
     player1_id: Mapped[int | None] = mapped_column(BigInteger)
+    # v3 exposes a single actor (personId); these stay NULL under v3 and are kept for
+    # compatibility with rows ingested under v2.
     player2_id: Mapped[int | None] = mapped_column(BigInteger)
     player3_id: Mapped[int | None] = mapped_column(BigInteger)
     team_id: Mapped[int | None] = mapped_column(BigInteger)

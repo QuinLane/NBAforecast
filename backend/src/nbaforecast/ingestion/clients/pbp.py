@@ -16,6 +16,7 @@ import requests
 from pbpstats.client import Client
 from pbpstats.resources.enhanced_pbp.field_goal import FieldGoal
 from pbpstats.resources.enhanced_pbp.free_throw import FreeThrow
+from pbpstats.resources.enhanced_pbp.live.enhanced_pbp_item import LiveEnhancedPbpItem
 
 from nbaforecast.config.settings import get_settings
 from nbaforecast.errors import IngestionError, TransientIngestionError
@@ -25,17 +26,32 @@ from nbaforecast.ingestion.clients.throttle import get_throttle
 
 logger = logging.getLogger(__name__)
 
+# cdn liveData period-boundary actions omit "teamId", so pbpstats' live items never get a
+# team_id attribute — but its possession builder reads event.team_id unguarded
+# (AttributeError, found live at M3.5). Class-level default mirrors pbpstats' own
+# "no team" sentinel (it filters `team_id != 0` everywhere).
+LiveEnhancedPbpItem.team_id = 0
+
 JsonDict = dict[str, Any]
 
 
 def _client() -> Client:
-    """Build a pbpstats client using the web source and on-disk cache."""
+    """Build a pbpstats client using the web source and on-disk cache.
+
+    Provider is ``live`` (cdn.nba.com liveData): the ``stats_nba`` provider's underlying v2
+    endpoints were retired by the NBA (M3.5). cdn liveData covers 2019-20 → present — enough
+    for RAPM's default 3-season window; pre-2019 possessions are currently unavailable
+    (historical-RAPM limitation, documented in plans/data-pipeline.md).
+    """
     cache_dir = Path(get_settings().pbpstats_cache_dir)
-    cache_dir.mkdir(parents=True, exist_ok=True)
+    # pbpstats writes into these subdirectories but never creates them (FileNotFoundError
+    # on a fresh cache, found live at M3.5).
+    for subdir in ("game_details", "pbp"):
+        (cache_dir / subdir).mkdir(parents=True, exist_ok=True)
     settings = {
         "dir": str(cache_dir),
-        "Boxscore": {"source": "web", "data_provider": "stats_nba"},
-        "Possessions": {"source": "web", "data_provider": "stats_nba"},
+        "Boxscore": {"source": "web", "data_provider": "live"},
+        "Possessions": {"source": "web", "data_provider": "live"},
     }
     return Client(settings)
 

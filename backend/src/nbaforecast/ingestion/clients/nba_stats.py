@@ -12,11 +12,14 @@ from collections.abc import Callable
 from typing import Any
 
 import requests
+
+# v3 boxscore/pbp endpoints: the NBA retired the v2 ones (empty payloads for every era,
+# discovered live at M3.5); v3 covers the full 1996+ era.
 from nba_api.stats.endpoints import (
-    boxscoreadvancedv2,
-    boxscoretraditionalv2,
+    boxscoreadvancedv3,
+    boxscoretraditionalv3,
     leaguegamelog,
-    playbyplayv2,
+    playbyplayv3,
     shotchartdetail,
 )
 
@@ -115,12 +118,12 @@ def fetch_boxscore(game_id: str) -> JsonDict:
     headers = stats_headers()
     timeout = get_settings().ingest_request_timeout
     traditional = _execute(
-        lambda: boxscoretraditionalv2.BoxScoreTraditionalV2(
+        lambda: boxscoretraditionalv3.BoxScoreTraditionalV3(
             game_id=game_id, headers=headers, timeout=timeout
         ).get_dict()
     )
     advanced = _execute(
-        lambda: boxscoreadvancedv2.BoxScoreAdvancedV2(
+        lambda: boxscoreadvancedv3.BoxScoreAdvancedV3(
             game_id=game_id, headers=headers, timeout=timeout
         ).get_dict()
     )
@@ -131,7 +134,7 @@ def fetch_pbp(game_id: str) -> JsonDict:
     """Return raw play-by-play for a game."""
     timeout = get_settings().ingest_request_timeout
     return _execute(
-        lambda: playbyplayv2.PlayByPlayV2(
+        lambda: playbyplayv3.PlayByPlayV3(
             game_id=game_id, headers=stats_headers(), timeout=timeout
         ).get_dict()
     )

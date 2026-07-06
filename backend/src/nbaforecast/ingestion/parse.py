@@ -10,6 +10,7 @@ follow the long-documented stats.nba.com schemas.
 
 import logging
 import math
+import re
 from datetime import date
 from typing import Any
 
@@ -127,139 +128,162 @@ def parse_games(schedule_raw: JsonDict) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def _team_rows(boxscore_raw: JsonDict) -> tuple[list[dict[str, Any]], dict[int, dict[str, Any]]]:
-    traditional = result_set_records(boxscore_raw["traditional"], "TeamStats")
-    advanced_by_team = {
-        int(r["TEAM_ID"]): r for r in result_set_records(boxscore_raw["advanced"], "TeamStats")
+def _v3_sides(boxscore_raw: JsonDict, root_key: str) -> dict[str, JsonDict]:
+    """``{"home": <team obj>, "away": <team obj>}`` from a v3 boxscore payload."""
+    root = boxscore_raw[root_key]
+    return {"home": root["homeTeam"], "away": root["awayTeam"]}
+
+
+def _counting_stats(stats: JsonDict) -> dict[str, int | None]:
+    """The shared v3 counting-stat mapping (identical for team and player rows)."""
+    return {
+        "pts": _opt_int(stats.get("points")),
+        "reb": _opt_int(stats.get("reboundsTotal")),
+        "oreb": _opt_int(stats.get("reboundsOffensive")),
+        "dreb": _opt_int(stats.get("reboundsDefensive")),
+        "ast": _opt_int(stats.get("assists")),
+        "stl": _opt_int(stats.get("steals")),
+        "blk": _opt_int(stats.get("blocks")),
+        "tov": _opt_int(stats.get("turnovers")),
+        "pf": _opt_int(stats.get("foulsPersonal")),
+        "fgm": _opt_int(stats.get("fieldGoalsMade")),
+        "fga": _opt_int(stats.get("fieldGoalsAttempted")),
+        "fg3m": _opt_int(stats.get("threePointersMade")),
+        "fg3a": _opt_int(stats.get("threePointersAttempted")),
+        "ftm": _opt_int(stats.get("freeThrowsMade")),
+        "fta": _opt_int(stats.get("freeThrowsAttempted")),
     }
-    return traditional, advanced_by_team
 
 
 def parse_team_game_stats(boxscore_raw: JsonDict, home_team_id: int) -> pd.DataFrame:
-    """Build ``team_game_stats`` from traditional + advanced box scores for one game."""
-    traditional, advanced_by_team = _team_rows(boxscore_raw)
-    team_ids = [int(r["TEAM_ID"]) for r in traditional]
+    """Build ``team_game_stats`` from v3 traditional + advanced box scores for one game.
+
+    ``home_team_id`` is retained for signature compatibility with the pipeline; home/away
+    truth comes from the payload's own ``homeTeam``/``awayTeam`` grouping.
+    """
+    trad = boxscore_raw["traditional"]["boxScoreTraditional"]
+    sides = _v3_sides(boxscore_raw["traditional"], "boxScoreTraditional")
+    adv_sides = _v3_sides(boxscore_raw["advanced"], "boxScoreAdvanced")
+    adv_by_team = {int(team["teamId"]): team["statistics"] for team in adv_sides.values()}
+    game_id = str(trad["gameId"])
+
     rows: list[dict[str, Any]] = []
-    for tr in traditional:
-        team_id = int(tr["TEAM_ID"])
-        adv = advanced_by_team.get(team_id, {})
-        opponent = next(t for t in team_ids if t != team_id)
+    for side, team in sides.items():
+        team_id = int(team["teamId"])
+        opponent = int(sides["away" if side == "home" else "home"]["teamId"])
+        adv = adv_by_team.get(team_id, {})
         rows.append(
             {
-                "game_id": tr["GAME_ID"],
+                "game_id": game_id,
                 "team_id": team_id,
                 "opponent_team_id": opponent,
-                "is_home": team_id == home_team_id,
-                "pts": _opt_int(tr["PTS"]),
-                "reb": _opt_int(tr["REB"]),
-                "oreb": _opt_int(tr["OREB"]),
-                "dreb": _opt_int(tr["DREB"]),
-                "ast": _opt_int(tr["AST"]),
-                "stl": _opt_int(tr["STL"]),
-                "blk": _opt_int(tr["BLK"]),
-                "tov": _opt_int(tr["TO"]),
-                "pf": _opt_int(tr["PF"]),
-                "fgm": _opt_int(tr["FGM"]),
-                "fga": _opt_int(tr["FGA"]),
-                "fg3m": _opt_int(tr["FG3M"]),
-                "fg3a": _opt_int(tr["FG3A"]),
-                "ftm": _opt_int(tr["FTM"]),
-                "fta": _opt_int(tr["FTA"]),
-                "off_rating": _opt_float(adv.get("OFF_RATING")),
-                "def_rating": _opt_float(adv.get("DEF_RATING")),
-                "net_rating": _opt_float(adv.get("NET_RATING")),
-                "pace": _opt_float(adv.get("PACE")),
-                "possessions": _opt_float(adv.get("POSS")),
+                "is_home": side == "home",
+                **_counting_stats(team["statistics"]),
+                "off_rating": _opt_float(adv.get("offensiveRating")),
+                "def_rating": _opt_float(adv.get("defensiveRating")),
+                "net_rating": _opt_float(adv.get("netRating")),
+                "pace": _opt_float(adv.get("pace")),
+                "possessions": _opt_float(adv.get("possessions")),
             }
         )
     return pd.DataFrame(rows)
 
 
 def parse_player_game_stats(boxscore_raw: JsonDict, home_team_id: int) -> pd.DataFrame:
-    """Build ``player_game_stats`` for players who appeared (non-null minutes)."""
-    traditional = result_set_records(boxscore_raw["traditional"], "PlayerStats")
-    advanced_by_player = {
-        int(r["PLAYER_ID"]): r for r in result_set_records(boxscore_raw["advanced"], "PlayerStats")
+    """Build ``player_game_stats`` for players who appeared (non-empty v3 minutes)."""
+    trad = boxscore_raw["traditional"]["boxScoreTraditional"]
+    sides = _v3_sides(boxscore_raw["traditional"], "boxScoreTraditional")
+    adv_sides = _v3_sides(boxscore_raw["advanced"], "boxScoreAdvanced")
+    adv_by_player = {
+        int(player["personId"]): player["statistics"]
+        for team in adv_sides.values()
+        for player in team.get("players", [])
     }
-    team_ids = {int(r["TEAM_ID"]) for r in traditional}
+    game_id = str(trad["gameId"])
+
     rows: list[dict[str, Any]] = []
-    for tr in traditional:
-        minutes = minutes_to_float(tr.get("MIN"))
-        if minutes is None:
-            continue  # DNP — counting stats are null; excluded from silver
-        player_id = int(tr["PLAYER_ID"])
-        team_id = int(tr["TEAM_ID"])
-        adv = advanced_by_player.get(player_id, {})
-        opponent = next(t for t in team_ids if t != team_id)
-        rows.append(
-            {
-                "game_id": tr["GAME_ID"],
-                "player_id": player_id,
-                "team_id": team_id,
-                "opponent_team_id": opponent,
-                "is_home": team_id == home_team_id,
-                "started": bool(tr.get("START_POSITION")),
-                "min": minutes,
-                "pts": _opt_int(tr["PTS"]),
-                "reb": _opt_int(tr["REB"]),
-                "oreb": _opt_int(tr["OREB"]),
-                "dreb": _opt_int(tr["DREB"]),
-                "ast": _opt_int(tr["AST"]),
-                "stl": _opt_int(tr["STL"]),
-                "blk": _opt_int(tr["BLK"]),
-                "tov": _opt_int(tr["TO"]),
-                "pf": _opt_int(tr["PF"]),
-                "fgm": _opt_int(tr["FGM"]),
-                "fga": _opt_int(tr["FGA"]),
-                "fg3m": _opt_int(tr["FG3M"]),
-                "fg3a": _opt_int(tr["FG3A"]),
-                "ftm": _opt_int(tr["FTM"]),
-                "fta": _opt_int(tr["FTA"]),
-                "plus_minus": _opt_int(tr.get("PLUS_MINUS")),
-                "usage_rate": _opt_float(adv.get("USG_PCT")),
-            }
-        )
+    for side, team in sides.items():
+        team_id = int(team["teamId"])
+        opponent = int(sides["away" if side == "home" else "home"]["teamId"])
+        for player in team.get("players", []):
+            stats = player["statistics"]
+            minutes = minutes_to_float(stats.get("minutes"))
+            if minutes is None:
+                continue  # DNP — counting stats are null; excluded from silver
+            player_id = int(player["personId"])
+            adv = adv_by_player.get(player_id, {})
+            rows.append(
+                {
+                    "game_id": game_id,
+                    "player_id": player_id,
+                    "team_id": team_id,
+                    "opponent_team_id": opponent,
+                    "is_home": side == "home",
+                    # v3 fills `position` only for the five starters.
+                    "started": bool(player.get("position")),
+                    "min": minutes,
+                    **_counting_stats(stats),
+                    "plus_minus": _opt_int(stats.get("plusMinusPoints")),
+                    "usage_rate": _opt_float(adv.get("usagePercentage")),
+                }
+            )
     return pd.DataFrame(rows)
 
 
-def _pbp_description(row: dict[str, Any]) -> str | None:
-    for key in ("HOMEDESCRIPTION", "VISITORDESCRIPTION", "NEUTRALDESCRIPTION"):
-        text = row.get(key)
-        if text:
-            return str(text)
-    return None
+_ISO_CLOCK_RE = re.compile(r"PT(\d+)M(\d+(?:\.\d+)?)S")
 
 
-def _pbp_scores(score: Any) -> tuple[int | None, int | None]:
-    """NBA pbp ``SCORE`` is ``"away - home"``; absent except on scoring plays."""
-    if not score or "-" not in str(score):
+def _v3_clock(clock: Any) -> tuple[str | None, int | None]:
+    """v3 ISO clock (``"PT11M22.00S"``) → (``"11:22"`` pc_time, seconds remaining)."""
+    match = _ISO_CLOCK_RE.fullmatch(str(clock or ""))
+    if match is None:
         return None, None
-    away, home = str(score).split("-")
-    return int(away.strip()), int(home.strip())
+    minutes, seconds = int(match.group(1)), int(float(match.group(2)))
+    return f"{minutes}:{seconds:02d}", minutes * 60 + seconds
+
+
+def _v3_score(value: Any) -> int | None:
+    """v3 ``scoreHome``/``scoreAway`` are strings, empty on non-scoring events."""
+    if value is None or value == "":
+        return None
+    return int(value)
+
+
+def _opt_str(value: Any) -> str | None:
+    return str(value) if value not in (None, "") else None
 
 
 def parse_play_by_play(pbp_raw: JsonDict) -> pd.DataFrame:
-    """Build ``play_by_play`` from a ``PlayByPlayV2`` payload."""
-    records = result_set_records(pbp_raw, "PlayByPlay")
+    """Build ``play_by_play`` from a ``PlayByPlayV3`` payload.
+
+    v3 exposes one actor per event (``personId``) — ``player2_id``/``player3_id`` stay NULL
+    (kept for rows ingested under v2).
+    """
+    game = pbp_raw["game"]
+    game_id = str(game["gameId"])
     rows: list[dict[str, Any]] = []
-    for row in records:
-        away_score, home_score = _pbp_scores(row.get("SCORE"))
+    for action in game["actions"]:
+        pc_time, seconds_remaining = _v3_clock(action.get("clock"))
         rows.append(
             {
-                "game_id": row["GAME_ID"],
-                "event_num": int(row["EVENTNUM"]),
-                "period": int(row["PERIOD"]),
-                "pc_time": row.get("PCTIMESTRING"),
-                "seconds_remaining_period": clock_to_seconds(row.get("PCTIMESTRING")),
-                "event_msg_type": _opt_int(row.get("EVENTMSGTYPE")),
-                "event_action_type": _opt_int(row.get("EVENTMSGACTIONTYPE")),
-                "description": _pbp_description(row),
-                "home_score": home_score,
-                "away_score": away_score,
-                "player1_id": _id_or_none(row.get("PLAYER1_ID")),
-                "player2_id": _id_or_none(row.get("PLAYER2_ID")),
-                "player3_id": _id_or_none(row.get("PLAYER3_ID")),
-                "team_id": _id_or_none(row.get("PLAYER1_TEAM_ID")),
+                "game_id": game_id,
+                # actionId, not actionNumber: v3 repeats actionNumber for paired events
+                # (e.g. a turnover and its steal), which would collide on the PK; actionId
+                # is unique and monotonic. NOTE: not the same numbering as shots.event_num
+                # (shotchartdetail's GAME_EVENT_ID).
+                "event_num": int(action["actionId"]),
+                "period": int(action["period"]),
+                "pc_time": pc_time,
+                "seconds_remaining_period": seconds_remaining,
+                "action_type": _opt_str(action.get("actionType")),
+                "sub_type": _opt_str(action.get("subType")),
+                "description": _opt_str(action.get("description")),
+                "home_score": _v3_score(action.get("scoreHome")),
+                "away_score": _v3_score(action.get("scoreAway")),
+                "player1_id": _id_or_none(action.get("personId")),
+                "player2_id": None,
+                "player3_id": None,
+                "team_id": _id_or_none(action.get("teamId")),
             }
         )
     return pd.DataFrame(rows)

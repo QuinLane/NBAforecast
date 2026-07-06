@@ -45,6 +45,9 @@ class GameMeta:
     season: str
     season_start_year: int
     home_team_id: int
+    # shotchartdetail returns an EMPTY chart when SeasonType doesn't match the game
+    # (playoff games under the default "Regular Season" — found live at M3.5).
+    season_type: str = "Regular Season"
 
 
 def _season_start_year(season: str) -> int:
@@ -87,6 +90,7 @@ async def ingest_schedule(
             season=season,
             season_start_year=year,
             home_team_id=int(row["home_team_id"]),
+            season_type=str(row["season_type"]),
         )
         for row in df.to_dict("records")
     ]
@@ -141,7 +145,7 @@ async def ingest_game(session: AsyncSession, store: ObjectStore, meta: GameMeta)
         endpoint="pbp",
     )
 
-    shots_raw = fetch_shots(gid, season=season)
+    shots_raw = fetch_shots(gid, season=season, season_type=meta.season_type)
     store.put_raw(STATS_SOURCE, "shots", season, gid, shots_raw)
     await load_silver(
         session,

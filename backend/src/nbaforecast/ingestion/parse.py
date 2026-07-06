@@ -296,6 +296,26 @@ def _shot_type(raw_type: Any) -> str | None:
     return str(raw_type).split(" ", 1)[0]
 
 
+SHOTS_COLUMNS: tuple[str, ...] = (
+    "game_id",
+    "event_num",
+    "player_id",
+    "team_id",
+    "period",
+    "seconds_remaining_period",
+    "loc_x",
+    "loc_y",
+    "shot_distance",
+    "shot_zone",
+    "shot_zone_area",
+    "shot_zone_range",
+    "shot_type",
+    "action_type",
+    "made",
+    "location_reliable",
+)
+
+
 def parse_shots(shots_raw: JsonDict, season_start_year: int) -> pd.DataFrame:
     """Build ``shots`` from a ``ShotChartDetail`` payload.
 
@@ -327,6 +347,10 @@ def parse_shots(shots_raw: JsonDict, season_start_year: int) -> pd.DataFrame:
                 "location_reliable": location_reliable,
             }
         )
+    if not rows:
+        # An empty result set must still produce the full column set — a column-less empty
+        # frame fails Pandera on every "missing column" instead of validating as 0 rows.
+        return pd.DataFrame(columns=list(SHOTS_COLUMNS))
     return pd.DataFrame(rows)
 
 

@@ -8,13 +8,16 @@ win probability, RAPM), every prediction broken down with SHAP. Located at
 `D:\PROJECTS 2026\NBAforecast`.
 
 ## Status
-**M0–M3 are merged to `main`** (all batch heads: win/margin/total/props/RAPM, explained; PRs
-#16–#40). Roadmap was restructured 2026-07-01 for portfolio impact — see `plans/roadmap.md` §6:
-new milestones **M3.5** (stack verification on real data — do this next) and **M4.5** (market
-benchmark + public report card + injury features); M4 is replay-first. Known debt: the docker
-stack has never been browser-verified end-to-end and no MLflow champion exists in dev (some
-endpoints 503) — that is exactly what M3.5 pays down. `plans/m2-session-protocol.md` is historical.
-A plain-language technical breakdown of the whole project lives at `docs/project-explainer.md`.
+**M0–M3.5 are complete and merged to `main`.** M0–M3: all batch heads (win/margin/total/props/RAPM),
+explained (PRs #16–#40). M3.5 (stack verification on real data) closed 2026-07-07: full 2025-26
+season ingested, all 7 MLflow champions promoted, every page renders real explained predictions,
+zero 503s (PRs #42–#57). Roadmap restructured twice — 2026-07-01 (`plans/roadmap.md` §6: added M3.5
++ M4.5) and 2026-07-07 (§7: added **M3.75 stats browser — do this next**, the stats-hub core pulled
+forward from M5). **M3.75** = player/team pages, box scores, a stat-trajectory chart (RAPM on a
+monthly snapshot cadence), head-to-head, leaderboards, quick-search — all queries over already-
+ingested data (tasks T3.16–T3.24). Deferred debt: the full-era backfill (1996+) still needs
+possessions made optional pre-2019 first (cdn coverage). `plans/m2-session-protocol.md` is
+historical. A plain-language technical breakdown lives at `docs/project-explainer.md`.
 
 ## Start here (planning docs)
 - `plans/master-plan.md` — index + every decision made.

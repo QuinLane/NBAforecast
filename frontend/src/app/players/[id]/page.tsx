@@ -266,16 +266,18 @@ export default function PlayerDetailPage({
                   </td>
                   <td className="py-2 px-2 font-sans whitespace-nowrap">
                     <span
-                      aria-label={g.won == null ? undefined : g.won ? "won" : "lost"}
-                      className={
+                      aria-label={
+                        g.won == null ? "result pending" : g.won ? "win" : "loss"
+                      }
+                      className={`inline-block w-4 text-center font-bold ${
                         g.won == null
                           ? "text-zinc-600"
                           : g.won
                             ? "text-emerald-400"
                             : "text-rose-400"
-                      }
+                      }`}
                     >
-                      {g.won == null ? "·" : g.won ? "▸" : "◂"}
+                      {g.won == null ? "–" : g.won ? "W" : "L"}
                     </span>{" "}
                     <span className="text-zinc-300">
                       {g.team_abbreviation ?? "—"} {g.is_home ? "vs" : "@"}{" "}

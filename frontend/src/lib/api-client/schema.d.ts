@@ -157,6 +157,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/players/{player_id}/stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Player Stats */
+        get: operations["get_player_stats_api_v1_players__player_id__stats_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/players/{player_id}/shots": {
         parameters: {
             query?: never;
@@ -500,6 +517,71 @@ export interface components {
             ast: number;
             /** Fg3M */
             fg3m: number;
+        };
+        /**
+         * PlayerGameStatLine
+         * @description One game's values for the stat-trajectory chart — chronological per-game series.
+         */
+        PlayerGameStatLine: {
+            /** Game Id */
+            game_id: string;
+            /**
+             * Game Date
+             * Format: date
+             */
+            game_date: string;
+            /** Season */
+            season: string;
+            /** Min */
+            min: number | null;
+            /** Pts */
+            pts: number;
+            /** Reb */
+            reb: number;
+            /** Ast */
+            ast: number;
+            /** Fg3M */
+            fg3m: number;
+        };
+        /**
+         * PlayerSeasonAverages
+         * @description A player's per-game averages for one season — the season/career table.
+         */
+        PlayerSeasonAverages: {
+            /** Season */
+            season: string;
+            /** Games Played */
+            games_played: number;
+            /** Min */
+            min: number | null;
+            /** Pts */
+            pts: number;
+            /** Reb */
+            reb: number;
+            /** Ast */
+            ast: number;
+            /** Fg3M */
+            fg3m: number;
+            /** Fg Pct */
+            fg_pct: number | null;
+            /** Fg3 Pct */
+            fg3_pct: number | null;
+            /** Ft Pct */
+            ft_pct: number | null;
+        };
+        /**
+         * PlayerStatTrajectory
+         * @description ``GET /players/{player_id}/stats`` — the per-game series plus season averages.
+         *
+         *     ``games`` drives the trajectory chart (PTS/REB/AST/3PM/MIN tabs; RAPM comes from the
+         *     separate snapshot-cadence ``/rapm`` history). ``seasons`` drives the season/career table —
+         *     one row today, a career ladder once the full-era backfill lands.
+         */
+        PlayerStatTrajectory: {
+            /** Games */
+            games: components["schemas"]["PlayerGameStatLine"][];
+            /** Seasons */
+            seasons: components["schemas"]["PlayerSeasonAverages"][];
         };
         /**
          * PlayerSummary
@@ -922,6 +1004,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PlayerDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_player_stats_api_v1_players__player_id__stats_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                player_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlayerStatTrajectory"];
                 };
             };
             /** @description Validation Error */

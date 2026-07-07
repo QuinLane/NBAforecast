@@ -335,6 +335,26 @@ def test_get_unknown_player_is_404(client: TestClient) -> None:
     assert client.get("/api/v1/players/99999999").status_code == 404
 
 
+def test_player_stats_trajectory_has_games_and_seasons(
+    client: TestClient, player_ids: list[int]
+) -> None:
+    body = client.get(f"/api/v1/players/{player_ids[0]}/stats").json()
+    assert len(body["games"]) > 0
+    assert len(body["seasons"]) > 0
+    # Games arrive chronologically.
+    dates = [g["game_date"] for g in body["games"]]
+    assert dates == sorted(dates)
+    # Season games_played reconciles with the per-game series for that season.
+    counted = sum(1 for g in body["games"] if g["season"] == body["seasons"][0]["season"])
+    assert body["seasons"][0]["games_played"] == counted
+    # Synthetic league emits no shot attempts, so shooting pcts guard to None (no div-by-zero).
+    assert body["seasons"][0]["fg_pct"] is None
+
+
+def test_player_stats_unknown_player_is_404(client: TestClient) -> None:
+    assert client.get("/api/v1/players/99999999/stats").status_code == 404
+
+
 def test_player_shots_reports_reliability(client: TestClient, player_ids: list[int]) -> None:
     shots = client.get(f"/api/v1/players/{player_ids[0]}/shots").json()
     assert len(shots) == 2

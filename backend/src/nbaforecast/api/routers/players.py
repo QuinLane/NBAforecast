@@ -9,6 +9,7 @@ from nbaforecast.api.model_provider import ModelProvider
 from nbaforecast.api.schemas.common import Page
 from nbaforecast.api.schemas.players import (
     PlayerDetail,
+    PlayerStatTrajectory,
     PlayerSummary,
     PropsProjection,
     ShotChartEntry,
@@ -39,6 +40,16 @@ async def get_player(
     if player is None:
         raise HTTPException(status_code=404, detail=f"player {player_id} not found")
     return player
+
+
+@router.get("/{player_id}/stats", response_model=PlayerStatTrajectory)
+async def get_player_stats(
+    player_id: int, session: AsyncSession = Depends(get_db_session)
+) -> PlayerStatTrajectory:
+    trajectory = await services.players.player_stat_trajectory(session, player_id)
+    if trajectory is None:
+        raise HTTPException(status_code=404, detail=f"player {player_id} not found")
+    return trajectory
 
 
 @router.get("/{player_id}/shots", response_model=list[ShotChartEntry])

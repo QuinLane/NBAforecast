@@ -14,6 +14,8 @@ export const playerQueryKey = (playerId: number) =>
   ["players", playerId] as const;
 export const playerPropsQueryKey = (playerId: number, gameId: string) =>
   ["players", playerId, "props", gameId] as const;
+export const playerStatsQueryKey = (playerId: number) =>
+  ["players", playerId, "stats"] as const;
 
 export function usePlayers(params?: PlayersParams) {
   return useQuery({
@@ -37,6 +39,21 @@ export function usePlayer(playerId: number) {
         { params: { path: { player_id: playerId } } },
       );
       if (error) throw new Error(`Player ${playerId} not found`);
+      return data;
+    },
+  });
+}
+
+/** Per-game stat series + season averages for the trajectory chart and season tables. */
+export function usePlayerStats(playerId: number) {
+  return useQuery({
+    queryKey: playerStatsQueryKey(playerId),
+    queryFn: async () => {
+      const { data, error } = await apiClient.GET(
+        "/api/v1/players/{player_id}/stats",
+        { params: { path: { player_id: playerId } } },
+      );
+      if (error) throw new Error("Failed to fetch player stats");
       return data;
     },
   });

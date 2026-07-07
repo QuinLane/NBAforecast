@@ -14,10 +14,24 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from nbaforecast.api.model_provider import ModelProvider
 from nbaforecast.api.schemas.common import Page
-from nbaforecast.api.schemas.games import GameDetail, GamePrediction, GameSummary, TeamSummary
+from nbaforecast.api.schemas.games import (
+    BoxScorePlayerLine,
+    BoxScoreTeam,
+    GameBoxScore,
+    GameDetail,
+    GamePrediction,
+    GameSummary,
+    TeamSummary,
+)
 from nbaforecast.explain.humanizer import humanize
 from nbaforecast.features.team_game import build_team_game_features
-from nbaforecast.storage.models import Game, Team, TeamGameStats
+from nbaforecast.storage.models import (
+    Game,
+    Player,
+    PlayerGameStats,
+    Team,
+    TeamGameStats,
+)
 from nbaforecast.storage.repositories import load_table_as_dataframe
 
 TOP_N_DRIVERS = 5
@@ -98,6 +112,103 @@ async def get_game(session: AsyncSession, game_id: str) -> GameDetail | None:
     summary = _to_summary(game, teams)
     return GameDetail(
         **summary.model_dump(), game_datetime=game.game_datetime, num_periods=game.num_periods
+    )
+
+
+def _boxscore_team(
+    team_stats: TeamGameStats,
+    team: TeamSummary,
+    player_rows: list[tuple[PlayerGameStats, str | None]],
+) -> BoxScoreTeam:
+    # Starters first, then by minutes played (descending); a stable, box-score-like order.
+    ordered = sorted(
+        player_rows,
+        key=lambda row: (not row[0].started, -(float(row[0].min) if row[0].min else 0.0)),
+    )
+    players = [
+        BoxScorePlayerLine(
+            player_id=stat.player_id,
+            full_name=name,
+            started=stat.started,
+            min=None if stat.min is None else float(stat.min),
+            pts=stat.pts,
+            reb=stat.reb,
+            ast=stat.ast,
+            stl=stat.stl,
+            blk=stat.blk,
+            tov=stat.tov,
+            fgm=stat.fgm,
+            fga=stat.fga,
+            fg3m=stat.fg3m,
+            fg3a=stat.fg3a,
+            ftm=stat.ftm,
+            fta=stat.fta,
+            plus_minus=stat.plus_minus,
+        )
+        for stat, name in ordered
+    ]
+    return BoxScoreTeam(
+        team=team,
+        is_home=team_stats.is_home,
+        pts=team_stats.pts,
+        reb=team_stats.reb,
+        ast=team_stats.ast,
+        stl=team_stats.stl,
+        blk=team_stats.blk,
+        tov=team_stats.tov,
+        fgm=team_stats.fgm,
+        fga=team_stats.fga,
+        fg3m=team_stats.fg3m,
+        fg3a=team_stats.fg3a,
+        ftm=team_stats.ftm,
+        fta=team_stats.fta,
+        players=players,
+    )
+
+
+async def get_game_boxscore(session: AsyncSession, game_id: str) -> GameBoxScore | None:
+    """``GET /games/{game_id}/boxscore`` — team totals + player lines for a played game.
+
+    Returns ``None`` if the game doesn't exist or has no ingested box score yet (scheduled/live);
+    callers 404 in that case.
+    """
+    game = await session.get(Game, game_id)
+    if game is None:
+        return None
+
+    team_stats = {
+        ts.team_id: ts
+        for ts in (
+            await session.execute(select(TeamGameStats).where(TeamGameStats.game_id == game_id))
+        )
+        .scalars()
+        .all()
+    }
+    home_stats = team_stats.get(game.home_team_id)
+    away_stats = team_stats.get(game.away_team_id)
+    if home_stats is None or away_stats is None:
+        return None  # not played / not ingested yet
+
+    player_rows = (
+        await session.execute(
+            select(PlayerGameStats, Player.full_name)
+            .join(Player, Player.player_id == PlayerGameStats.player_id)
+            .where(PlayerGameStats.game_id == game_id)
+        )
+    ).all()
+    by_team: dict[int, list[tuple[PlayerGameStats, str | None]]] = {
+        game.home_team_id: [],
+        game.away_team_id: [],
+    }
+    for stat, name in player_rows:
+        by_team.setdefault(stat.team_id, []).append((stat, name))
+
+    teams = await _team_lookup(session)
+    return GameBoxScore(
+        game_id=game_id,
+        status=game.status,
+        home=_boxscore_team(home_stats, teams[game.home_team_id], by_team[game.home_team_id]),
+        away=_boxscore_team(away_stats, teams[game.away_team_id], by_team[game.away_team_id]),
     )
 
 

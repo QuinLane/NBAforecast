@@ -12,6 +12,8 @@ export type GamesParams = {
 export const gamesQueryKey = (params?: GamesParams) =>
   ["games", params ?? {}] as const;
 export const gameQueryKey = (gameId: string) => ["games", gameId] as const;
+export const gameBoxScoreQueryKey = (gameId: string) =>
+  ["games", gameId, "boxscore"] as const;
 
 export function useGames(params?: GamesParams) {
   return useQuery({
@@ -34,6 +36,23 @@ export function useGame(gameId: string) {
         params: { path: { game_id: gameId } },
       });
       if (error) throw new Error(`Game ${gameId} not found`);
+      return data;
+    },
+  });
+}
+
+/** Box score (team totals + player lines). 404s until the game has been played/ingested. */
+export function useGameBoxScore(gameId: string, enabled = true) {
+  return useQuery({
+    queryKey: gameBoxScoreQueryKey(gameId),
+    enabled: enabled && gameId !== "",
+    retry: false, // a 404 (game not played yet) is expected, not worth retrying
+    queryFn: async () => {
+      const { data, error } = await apiClient.GET(
+        "/api/v1/games/{game_id}/boxscore",
+        { params: { path: { game_id: gameId } } },
+      );
+      if (error) throw new Error("Box score unavailable");
       return data;
     },
   });

@@ -2,6 +2,7 @@
 
 import { use, useState } from "react";
 import Link from "next/link";
+import { GameBoxScore } from "@/components/game-boxscore";
 import { TeamLogo } from "@/components/nba-images";
 import { PredictionExplainer } from "@/components/prediction-explainer";
 import {
@@ -167,6 +168,9 @@ export default function GameDetailPage({
       ) : predQ.isPending ? (
         <div className="h-64 rounded-xl bg-zinc-800/50 animate-pulse" />
       ) : null}
+
+      {/* Box score (played games only) */}
+      <GameBoxScore gameId={id} enabled={game?.status === "final"} />
     </main>
   );
 }

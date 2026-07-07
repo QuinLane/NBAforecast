@@ -9,7 +9,12 @@ from nbaforecast.api import services
 from nbaforecast.api.deps import get_db_session, get_model_provider
 from nbaforecast.api.model_provider import ModelProvider
 from nbaforecast.api.schemas.common import Page
-from nbaforecast.api.schemas.games import GameDetail, GamePrediction, GameSummary
+from nbaforecast.api.schemas.games import (
+    GameBoxScore,
+    GameDetail,
+    GamePrediction,
+    GameSummary,
+)
 
 router = APIRouter(prefix="/games", tags=["games"])
 
@@ -34,6 +39,16 @@ async def get_game(game_id: str, session: AsyncSession = Depends(get_db_session)
     if game is None:
         raise HTTPException(status_code=404, detail=f"game {game_id!r} not found")
     return game
+
+
+@router.get("/{game_id}/boxscore", response_model=GameBoxScore)
+async def get_game_boxscore(
+    game_id: str, session: AsyncSession = Depends(get_db_session)
+) -> GameBoxScore:
+    boxscore = await services.games.get_game_boxscore(session, game_id)
+    if boxscore is None:
+        raise HTTPException(status_code=404, detail=f"no box score available for game {game_id!r}")
+    return boxscore
 
 
 async def _predict_or_404(

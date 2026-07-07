@@ -175,6 +175,48 @@
     }
    }
   },
+  "/api/v1/games/{game_id}/boxscore": {
+   "get": {
+    "tags": [
+     "games"
+    ],
+    "summary": "Get Game Boxscore",
+    "operationId": "get_game_boxscore_api_v1_games__game_id__boxscore_get",
+    "parameters": [
+     {
+      "name": "game_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "title": "Game Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/GameBoxScore"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
   "/api/v1/games/{game_id}/prediction": {
    "get": {
     "tags": [
@@ -881,6 +923,207 @@
  },
  "components": {
   "schemas": {
+   "BoxScorePlayerLine": {
+    "properties": {
+     "player_id": {
+      "type": "integer",
+      "title": "Player Id"
+     },
+     "full_name": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Full Name"
+     },
+     "started": {
+      "type": "boolean",
+      "title": "Started"
+     },
+     "min": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Min"
+     },
+     "pts": {
+      "type": "integer",
+      "title": "Pts"
+     },
+     "reb": {
+      "type": "integer",
+      "title": "Reb"
+     },
+     "ast": {
+      "type": "integer",
+      "title": "Ast"
+     },
+     "stl": {
+      "type": "integer",
+      "title": "Stl"
+     },
+     "blk": {
+      "type": "integer",
+      "title": "Blk"
+     },
+     "tov": {
+      "type": "integer",
+      "title": "Tov"
+     },
+     "fgm": {
+      "type": "integer",
+      "title": "Fgm"
+     },
+     "fga": {
+      "type": "integer",
+      "title": "Fga"
+     },
+     "fg3m": {
+      "type": "integer",
+      "title": "Fg3M"
+     },
+     "fg3a": {
+      "type": "integer",
+      "title": "Fg3A"
+     },
+     "ftm": {
+      "type": "integer",
+      "title": "Ftm"
+     },
+     "fta": {
+      "type": "integer",
+      "title": "Fta"
+     },
+     "plus_minus": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Plus Minus"
+     }
+    },
+    "type": "object",
+    "required": [
+     "player_id",
+     "full_name",
+     "started",
+     "min",
+     "pts",
+     "reb",
+     "ast",
+     "stl",
+     "blk",
+     "tov",
+     "fgm",
+     "fga",
+     "fg3m",
+     "fg3a",
+     "ftm",
+     "fta",
+     "plus_minus"
+    ],
+    "title": "BoxScorePlayerLine",
+    "description": "One player's box-score line within a game box score."
+   },
+   "BoxScoreTeam": {
+    "properties": {
+     "team": {
+      "$ref": "#/components/schemas/nbaforecast__api__schemas__games__TeamSummary"
+     },
+     "is_home": {
+      "type": "boolean",
+      "title": "Is Home"
+     },
+     "pts": {
+      "type": "integer",
+      "title": "Pts"
+     },
+     "reb": {
+      "type": "integer",
+      "title": "Reb"
+     },
+     "ast": {
+      "type": "integer",
+      "title": "Ast"
+     },
+     "stl": {
+      "type": "integer",
+      "title": "Stl"
+     },
+     "blk": {
+      "type": "integer",
+      "title": "Blk"
+     },
+     "tov": {
+      "type": "integer",
+      "title": "Tov"
+     },
+     "fgm": {
+      "type": "integer",
+      "title": "Fgm"
+     },
+     "fga": {
+      "type": "integer",
+      "title": "Fga"
+     },
+     "fg3m": {
+      "type": "integer",
+      "title": "Fg3M"
+     },
+     "fg3a": {
+      "type": "integer",
+      "title": "Fg3A"
+     },
+     "ftm": {
+      "type": "integer",
+      "title": "Ftm"
+     },
+     "fta": {
+      "type": "integer",
+      "title": "Fta"
+     },
+     "players": {
+      "items": {
+       "$ref": "#/components/schemas/BoxScorePlayerLine"
+      },
+      "type": "array",
+      "title": "Players"
+     }
+    },
+    "type": "object",
+    "required": [
+     "team",
+     "is_home",
+     "pts",
+     "reb",
+     "ast",
+     "stl",
+     "blk",
+     "tov",
+     "fgm",
+     "fga",
+     "fg3m",
+     "fg3a",
+     "ftm",
+     "fta",
+     "players"
+    ],
+    "title": "BoxScoreTeam",
+    "description": "One team's totals plus its player lines, ordered starters-then-minutes."
+   },
    "Contribution": {
     "properties": {
      "feature": {
@@ -988,6 +1231,33 @@
     ],
     "title": "ExplanationUnits",
     "description": "What scale ``Explanation.baseline``/``prediction``/``Contribution.contribution`` are in."
+   },
+   "GameBoxScore": {
+    "properties": {
+     "game_id": {
+      "type": "string",
+      "title": "Game Id"
+     },
+     "status": {
+      "type": "string",
+      "title": "Status"
+     },
+     "home": {
+      "$ref": "#/components/schemas/BoxScoreTeam"
+     },
+     "away": {
+      "$ref": "#/components/schemas/BoxScoreTeam"
+     }
+    },
+    "type": "object",
+    "required": [
+     "game_id",
+     "status",
+     "home",
+     "away"
+    ],
+    "title": "GameBoxScore",
+    "description": "``GET /games/{game_id}/boxscore`` \u2014 both teams' totals and player lines for a played game."
    },
    "GameDetail": {
     "properties": {

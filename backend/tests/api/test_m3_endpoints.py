@@ -371,6 +371,29 @@ def test_list_and_get_team(client: TestClient) -> None:
     assert client.get("/api/v1/teams/99999999").status_code == 404
 
 
+# ── box score ─────────────────────────────────────────────────────────────────────────────────
+
+
+def test_game_boxscore_has_both_teams(client: TestClient) -> None:
+    games_df, _t, _te, _pgs, _players = _league()
+    game_id = str(
+        games_df.loc[games_df["status"] == "final"].sort_values("game_date").iloc[-1]["game_id"]
+    )
+    body = client.get(f"/api/v1/games/{game_id}/boxscore").json()
+    assert body["game_id"] == game_id
+    assert len(body["home"]["players"]) > 0
+    assert len(body["away"]["players"]) > 0
+    # Starters sort ahead of bench.
+    started_flags = [p["started"] for p in body["home"]["players"]]
+    assert started_flags == sorted(started_flags, reverse=True)
+    # Team-total fields are present on each side.
+    assert "pts" in body["home"] and "reb" in body["away"]
+
+
+def test_game_boxscore_unknown_game_is_404(client: TestClient) -> None:
+    assert client.get("/api/v1/games/not_a_game/boxscore").status_code == 404
+
+
 # ── stats ───────────────────────────────────────────────────────────────────────────────────
 
 

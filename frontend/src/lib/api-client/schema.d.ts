@@ -55,6 +55,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/games/{game_id}/boxscore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Game Boxscore */
+        get: operations["get_game_boxscore_api_v1_games__game_id__boxscore_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/games/{game_id}/prediction": {
         parameters: {
             query?: never;
@@ -264,6 +281,81 @@ export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
         /**
+         * BoxScorePlayerLine
+         * @description One player's box-score line within a game box score.
+         */
+        BoxScorePlayerLine: {
+            /** Player Id */
+            player_id: number;
+            /** Full Name */
+            full_name: string | null;
+            /** Started */
+            started: boolean;
+            /** Min */
+            min: number | null;
+            /** Pts */
+            pts: number;
+            /** Reb */
+            reb: number;
+            /** Ast */
+            ast: number;
+            /** Stl */
+            stl: number;
+            /** Blk */
+            blk: number;
+            /** Tov */
+            tov: number;
+            /** Fgm */
+            fgm: number;
+            /** Fga */
+            fga: number;
+            /** Fg3M */
+            fg3m: number;
+            /** Fg3A */
+            fg3a: number;
+            /** Ftm */
+            ftm: number;
+            /** Fta */
+            fta: number;
+            /** Plus Minus */
+            plus_minus: number | null;
+        };
+        /**
+         * BoxScoreTeam
+         * @description One team's totals plus its player lines, ordered starters-then-minutes.
+         */
+        BoxScoreTeam: {
+            team: components["schemas"]["nbaforecast__api__schemas__games__TeamSummary"];
+            /** Is Home */
+            is_home: boolean;
+            /** Pts */
+            pts: number;
+            /** Reb */
+            reb: number;
+            /** Ast */
+            ast: number;
+            /** Stl */
+            stl: number;
+            /** Blk */
+            blk: number;
+            /** Tov */
+            tov: number;
+            /** Fgm */
+            fgm: number;
+            /** Fga */
+            fga: number;
+            /** Fg3M */
+            fg3m: number;
+            /** Fg3A */
+            fg3a: number;
+            /** Ftm */
+            ftm: number;
+            /** Fta */
+            fta: number;
+            /** Players */
+            players: components["schemas"]["BoxScorePlayerLine"][];
+        };
+        /**
          * Contribution
          * @description One feature's signed contribution to a single prediction.
          *
@@ -315,6 +407,18 @@ export interface components {
          * @enum {string}
          */
         ExplanationUnits: "probability_points" | "log_odds" | "points" | "rebounds" | "assists" | "three_pointers_made";
+        /**
+         * GameBoxScore
+         * @description ``GET /games/{game_id}/boxscore`` — both teams' totals and player lines for a played game.
+         */
+        GameBoxScore: {
+            /** Game Id */
+            game_id: string;
+            /** Status */
+            status: string;
+            home: components["schemas"]["BoxScoreTeam"];
+            away: components["schemas"]["BoxScoreTeam"];
+        };
         /**
          * GameDetail
          * @description Full game record — backend-api.md §3 ``GET /games/{game_id}``.
@@ -814,6 +918,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["GameDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_game_boxscore_api_v1_games__game_id__boxscore_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                game_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GameBoxScore"];
                 };
             };
             /** @description Validation Error */

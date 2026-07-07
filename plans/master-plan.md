@@ -141,3 +141,11 @@ S3/MinIO + Parquet · Redis · Docker · GitHub Actions · Next.js + TypeScript 
   [implementation-plan.md](implementation-plan.md) for tasks T3.13–T3.15, T4.11–T4.17, T5.5–T5.6.
   New: [`docs/project-explainer.md`](../docs/project-explainer.md) — plain-language technical
   breakdown of the whole project (interview prep; lives outside `plans/` so it survives cleanup).
+- 2026-07-07 — **Stats-browser pull-forward** (M3.5 complete). Inserted **M3.75** (stats-hub core
+  pulled forward from M5): player/team pages, box scores, a stat-trajectory chart (tabs incl. RAPM,
+  on a monthly snapshot cadence), head-to-head lookup, leaderboards, quick-search — all queries
+  over already-ingested data. Player pages become stats-first (props → trajectory → tables → log).
+  Player headshots + team logos hotlinked from the NBA CDN. RAPM trajectory lives on player pages,
+  never the leaderboard (snapshot ≠ self-over-time; career = per-season path, not an era-blended
+  average). M5 keeps shot charts, how-it-works, Monte Carlo. See [roadmap.md §7](roadmap.md) and
+  [implementation-plan.md](implementation-plan.md) tasks T3.16–T3.24.

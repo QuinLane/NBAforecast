@@ -26,10 +26,11 @@
                                            → ⭐ vertical slice             (M2)
 6. modeling (margin/total/props) + rapm    → broaden on shared infra       (M3)
 7. stack verification + real champions     → prove the spine on real data  (M3.5)
-8. live-system + replay                    → live lane, demoable off-season(M4)
-9. market benchmark + report card + injuries → grade the model publicly    (M4.5)
-10. frontend (hub) + explainability (global) + Monte Carlo → stats hub & polish (M5)
-11. testing (completeness) + infrastructure → harden + deploy              (M6)
+8. stats browser (player/team pages, box scores, trajectory, leaderboards) → product surface (M3.75)
+9. live-system + replay                    → live lane, demoable off-season(M4)
+10. market benchmark + report card + injuries → grade the model publicly   (M4.5)
+11. frontend (shot charts, how-it-works) + Monte Carlo → charts & polish    (M5)
+12. testing (completeness) + infrastructure → harden + deploy              (M6)
 ```
 
 ## 3. Task checklist
@@ -115,6 +116,26 @@ Format: **task — source prompt — depends-on**. ✅-gate at each milestone en
 | T3.15 Browser walkthrough of every page against the live stack; fix wiring bugs found | roadmap M3.5 | T3.14 |
 | **Gate** | every page renders real predictions + explanations from the dockerized stack; zero 503s; wiring bugs fixed | |
 
+### M3.75 — Stats browser (added 2026-07-07)
+> The stats-hub core pulled forward from M5: player/team pages, box scores, a stat-trajectory
+> chart, head-to-head lookup, leaderboards, quick-search. All plain queries over already-ingested
+> data — no new sources, no ML risk. Player pages become **stats-first**: props (next-game
+> relevance) on top, then a trajectory chart, then season/career tables and game logs. The RAPM
+> trajectory lives on the player page, never the leaderboard (snapshot comparison ≠ self-over-time).
+
+| Task | Source | Depends |
+|------|--------|---------|
+| T3.16 Player headshots + team logos hotlinked from the NBA CDN (shared components, id-keyed, fallbacks) | roadmap M3.75 | T3.11 |
+| T3.17 Backend: player stat trajectory + season/career aggregate endpoints (per-game series + season averages; RAPM series already served) | backend-api §4 | T3.14 |
+| T3.18 Frontend: player page restructure — props → trajectory chart (tabs PTS/REB/AST/3PM/MIN/RAPM) → season/career tables → game log | frontend Prompt 6 | T3.16, T3.17 |
+| T3.19 Backend: game box score endpoint (team + player lines for a finished game) | backend-api §3 | T3.14 |
+| T3.20 Frontend: box score section on the game detail page | frontend Prompt 6 | T3.19 |
+| T3.21 Backend: team detail (roster + record + recent games) + head-to-head history endpoints | backend-api §3-4 | T3.14 |
+| T3.22 Frontend: team pages (roster/record/recent) + head-to-head view | frontend Prompt 6 | T3.21 |
+| T3.23 Backend: stat leaderboards endpoint (LeaderboardEntry schema already stubbed) | backend-api §4 | T3.14 |
+| T3.24 Frontend: leaderboards page + header quick-search (players/teams) | frontend Prompt 6 | T3.23 |
+| **Gate** | player pages read props → trajectory → stats → log; any finished game shows its box score; team pages show roster/record/head-to-head; leaderboards + search work | |
+
 ### M4 — Live system (replay-first)
 > **Replay is a first-class design constraint, not a bolt-on:** the live pipeline must accept an
 > archived play-by-play source interchangeably with the live feed (same interface), so any past
@@ -151,11 +172,14 @@ Format: **task — source prompt — depends-on**. ✅-gate at each milestone en
 | T4.17 Availability features (e.g. top-N-by-RAPM available flags, minutes-weighted availability) + wiring into team/player features + leakage tests (as-of report time only) | feature-eng Prompts 2–3 pattern | T4.16, T3.9 |
 | **Gate** | report card live with real backtest vs. closing lines; nightly capture running; availability features in champions with no-leakage tests green | |
 
-### M5 — Stats hub & polish
+### M5 — Shot charts, Monte Carlo & polish
+> Player/team profiles + leaderboards moved forward to M3.75; M5 keeps shot charts, how-it-works,
+> Monte Carlo, and polish.
+
 | Task | Source | Depends |
 |------|--------|---------|
 | T5.1 ShotChart (D3) | frontend Prompt 4 | T3.10 |
-| T5.2 Team/player profiles, leaderboards, how-it-works | frontend Prompt 6 | T3.12 |
+| T5.2 How-it-works page (global SHAP) | frontend Prompt 6 | T3.12 |
 | T5.3 SEO + a11y | frontend Prompt 7 | T5.2 |
 | T5.4 Frontend component tests | frontend Prompt 8 | T2.16 |
 | T5.5 Monte Carlo season simulator: simulate remaining season ~10k× off the game head → playoff/seed/title odds per team, nightly refresh + API + fan-chart page | this table (spec inline) | T3.14 |
@@ -197,8 +221,9 @@ Built-in Claude Code skills to call at the right moments — don't forget these.
 
 Per-milestone quick reference: **M2** → `/code-review` (ultra), `/verify`, `/run`. **M3** →
 `/review` per agent PR. **M3.5** → `/verify` + `/run` (that milestone *is* verification).
-**M4–M5 (incl. M4.5)** → `/verify`, `/run`; `/code-review` on non-trivial-logic PRs (market
-backtest math, availability leakage, Monte Carlo). **M6** → `/security-review`.
+**M3.75** → `/code-review` on the endpoint/query PRs (leakage-free aggregation, N+1 avoidance);
+skip pure UI glue. **M4–M5 (incl. M4.5)** → `/verify`, `/run`; `/code-review` on non-trivial-logic
+PRs (market backtest math, availability leakage, Monte Carlo). **M6** → `/security-review`.
 
 ## 6. Definition of done (project)
 Every milestone gate green through M6; v1 scope from [master-plan.md §3](master-plan.md) shipped,

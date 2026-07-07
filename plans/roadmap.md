@@ -64,6 +64,22 @@ docker stack up → full-era backfill verified → real training runs → MLflow
 champions that M4.5 and M5's Monte Carlo consume.
 **DoD:** every page renders real predictions + explanations from the dockerized stack; zero 503s.
 
+### M3.75 — Stats browser *(added 2026-07-07)*
+The stats-hub core, pulled forward from M5. The site should be a place people visit to look up
+*any* stat easily ("how did the Wolves play last time against the Knicks?") — predictions are the
+differentiator, but stats are the product surface they hang on. Everything here is plain queries
+over already-ingested data: zero ML risk, high visitor-facing value, and M4/M4.5 get better when
+team/player pages exist to hang injuries and odds on. Player pages become stats-first: projected
+props on top (next-game relevance), then a **stat trajectory chart** (tabs: PTS/REB/AST/3PM/MIN/
+RAPM; per-game + rolling average for loaded seasons, season-by-season career mode once the full-era
+backfill lands — RAPM uses the monthly snapshot cadence), then season/career tables and game logs.
+Plus: full box scores on game pages, team pages (roster/record/recent games), head-to-head history,
+stat leaderboards, and header quick-search. Trajectory lives on player pages, **not** the RAPM
+leaderboard — the leaderboard compares players at one snapshot; a trajectory compares a player
+against himself.
+**DoD:** player pages read like a stat site (props → trajectory → stats → log); any finished game
+shows its full box score; team pages show roster/record/head-to-head; leaderboards + search work.
+
 ### M4 — Live system (replay-first)
 Live poller (NBA cdn + ESPN fallback), game-state features, **both** live win-prob models
 (LightGBM + NN, compared), Redis fan-out, **SSE** endpoint, live dashboard + persisted timeline
@@ -87,14 +103,15 @@ calibration and honesty, never implied betting edge.
 **DoD:** report card live on real backtest vs. closing lines; nightly capture running; availability
 features in champions, no-leakage green.
 
-### M5 — Stats hub & polish
-Shot charts (D3), player/team profiles, stat leaderboards, **how-it-works** (global SHAP),
-SEO + a11y ([frontend.md](frontend.md)). Plus the **Monte Carlo season simulator** (simulate the
-remaining season ~10k× off the game head → playoff/seed/title odds, nightly, fan-chart page),
-**props uncertainty bands** rendered underneath the point estimate (quantile heads already exist),
-and **prediction provenance** in the UI (model version · trained-through date · features as-of).
-**DoD:** full stats hub navigable; SEO metadata + how-it-works page in place; Monte Carlo page
-live; props show bands + provenance.
+### M5 — Shot charts, Monte Carlo & polish
+Shot charts (D3), **how-it-works** (global SHAP), SEO + a11y ([frontend.md](frontend.md)) —
+player/team profiles and leaderboards moved forward to M3.75. Plus the **Monte Carlo season
+simulator** (simulate the remaining season ~10k× off the game head → playoff/seed/title odds,
+nightly, fan-chart page), **props uncertainty bands** rendered underneath the point estimate
+(quantile heads already exist), and **prediction provenance** in the UI (model version ·
+trained-through date · features as-of).
+**DoD:** shot charts live; SEO metadata + how-it-works page in place; Monte Carlo page live;
+props show bands + provenance.
 
 ### M6 — Hardening & deploy
 Testing completeness (coverage gate + Playwright flow, [testing.md](testing.md)); observability
@@ -106,8 +123,9 @@ full PBP-era history.
 ## 3. Dependency flow
 
 ```
-M0 ─► M1 ─► M2 ⭐ ─► M3 ─► M3.5 ─► M4 ─► M4.5 ─► M5 ─► M6
-                └► (M3+ each build on the M2 spine; M3.5 proves it on real data before the live lane)
+M0 ─► M1 ─► M2 ⭐ ─► M3 ─► M3.5 ─► M3.75 ─► M4 ─► M4.5 ─► M5 ─► M6
+                └► (M3+ each build on the M2 spine; M3.5 proves it on real data; M3.75 makes the
+                    stats surface a product before the live lane lands on top)
 ```
 
 ## 4. v1 "done" definition
@@ -137,3 +155,21 @@ hub, deployed publicly, tested, and monitored, retraining nightly on the full PB
   library, so the live system demos year-round (off-season = July–October).
 - **Monte Carlo season simulator + props uncertainty bands (under the point estimate) +
   prediction provenance (M5)** — cheap rides on existing heads/MLflow metadata.
+
+## 7. Decisions (resolved 2026-07-07 — stats-browser pull-forward)
+- **M3.75 inserted (stats-hub core pulled forward from M5)** — the site is a stats browser first,
+  a predictor on top: all data is already ingested, the work is queries + UI, and M4/M4.5 features
+  need team/player pages to land on. M5 keeps shot charts, Monte Carlo, and polish.
+- **Player pages are stats-first** — props (next-game relevance) on top, then a trajectory chart
+  with stat tabs, then season/career tables and game logs.
+- **RAPM trajectory lives on player pages, not the leaderboard** — the leaderboard is a
+  single-snapshot cross-player comparison; trajectories compare a player against himself (shorter
+  careers just mean shorter lines). Career RAPM is shown as the per-season path, **never** a
+  possession-weighted average across eras (reintroduces sample-size skew and cross-era
+  incomparability).
+- **Monthly RAPM snapshot cadence** — `player_rapm` now stores month-start + season-end snapshots
+  (the trainer's `--rapm-monthly`), so within-season progression is chartable from one backfilled
+  season; the same chart becomes a career path after the full-era backfill.
+- **Player headshots + team logos hotlinked from the NBA public CDN** — keyed by the same ids we
+  store; initials/spacer fallbacks. Fine for a non-commercial portfolio; a licensed image API
+  (SportsDataIO/Sportradar) would be needed if this ever became commercial.

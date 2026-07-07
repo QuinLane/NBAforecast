@@ -2,6 +2,7 @@
 
 import { use, useState } from "react";
 import Link from "next/link";
+import { TeamLogo } from "@/components/nba-images";
 import { PredictionExplainer } from "@/components/prediction-explainer";
 import {
   useGame,
@@ -66,6 +67,11 @@ export default function GameDetailPage({
         <section className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-5">
           <div className="flex items-center justify-between gap-4">
             <div className="text-center flex-1">
+              <TeamLogo
+                teamId={game.home_team.team_id}
+                name={game.home_team.full_name}
+                className="size-12 mx-auto mb-1"
+              />
               <div className="text-2xl font-bold">{game.home_team.abbreviation}</div>
               <div className="text-xs text-zinc-500">{game.home_team.full_name}</div>
               {game.home_score != null && (
@@ -86,6 +92,11 @@ export default function GameDetailPage({
               </div>
             </div>
             <div className="text-center flex-1">
+              <TeamLogo
+                teamId={game.away_team.team_id}
+                name={game.away_team.full_name}
+                className="size-12 mx-auto mb-1"
+              />
               <div className="text-2xl font-bold">{game.away_team.abbreviation}</div>
               <div className="text-xs text-zinc-500">{game.away_team.full_name}</div>
               {game.away_score != null && (

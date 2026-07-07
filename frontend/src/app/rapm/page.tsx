@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { PlayerHeadshot } from "@/components/nba-images";
 import { useRapmLeaderboard, type RapmSort } from "@/lib/hooks";
 
 const PAGE_SIZE = 25;
@@ -139,8 +140,13 @@ export default function RapmPage() {
                   <td className="py-2 pr-2">
                     <Link
                       href={`/players/${entry.player_id}`}
-                      className="hover:underline"
+                      className="inline-flex items-center gap-2 hover:underline"
                     >
+                      <PlayerHeadshot
+                        playerId={entry.player_id}
+                        name={entry.full_name ?? ""}
+                        className="size-7"
+                      />
                       {entry.full_name ?? `Player ${entry.player_id}`}
                     </Link>
                   </td>

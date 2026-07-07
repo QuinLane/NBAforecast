@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { TeamLogo } from "@/components/nba-images";
 import { useGames } from "@/lib/hooks";
 
 const PAGE_SIZE = 20;
@@ -36,8 +37,18 @@ export default function GamesPage() {
                   className="flex items-center justify-between px-4 py-3 rounded-lg border border-zinc-800 bg-zinc-900/50 hover:bg-zinc-800/60 transition-colors"
                 >
                   <div className="flex items-center gap-3">
-                    <span className="font-medium text-sm">
+                    <span className="flex items-center gap-1.5 font-medium text-sm">
+                      <TeamLogo
+                        teamId={game.home_team.team_id}
+                        name={game.home_team.full_name}
+                        className="size-6"
+                      />
                       {game.home_team.abbreviation} vs {game.away_team.abbreviation}
+                      <TeamLogo
+                        teamId={game.away_team.team_id}
+                        name={game.away_team.full_name}
+                        className="size-6"
+                      />
                     </span>
                     <span className="text-xs text-zinc-600">{game.game_date}</span>
                   </div>

@@ -387,7 +387,8 @@ def test_game_boxscore_has_both_teams(client: TestClient) -> None:
     started_flags = [p["started"] for p in body["home"]["players"]]
     assert started_flags == sorted(started_flags, reverse=True)
     # Team-total fields are present on each side.
-    assert "pts" in body["home"] and "reb" in body["away"]
+    assert "pts" in body["home"]
+    assert "reb" in body["away"]
 
 
 def test_game_boxscore_unknown_game_is_404(client: TestClient) -> None:

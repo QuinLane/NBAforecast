@@ -15,7 +15,7 @@ from nbaforecast.api.schemas.players import (
     PlayerSummary,
     ShotChartEntry,
 )
-from nbaforecast.storage.models import Game, Player, PlayerGameStats, Shot
+from nbaforecast.storage.models import Game, Player, PlayerGameStats, Shot, Team
 
 RECENT_GAMES = 10
 
@@ -33,13 +33,25 @@ async def list_players(
     session: AsyncSession,
     *,
     active: bool | None = None,
+    with_stats: bool = False,
     page: int = 1,
     page_size: int = 25,
 ) -> Page[PlayerSummary]:
-    """``GET /players`` — paginated player list, optionally filtered to active players."""
+    """``GET /players`` — paginated player list, optionally filtered.
+
+    ``with_stats`` keeps only players with at least one ingested game line — the reference
+    table carries the full historical index (~5k players), most of whom have no data in the
+    loaded seasons (walkthrough finding, T3.15).
+    """
     query = select(Player)
     if active is not None:
         query = query.where(Player.is_active == active)
+    if with_stats:
+        query = query.where(
+            select(PlayerGameStats.player_id)
+            .where(PlayerGameStats.player_id == Player.player_id)
+            .exists()
+        )
     total = (await session.execute(select(func.count()).select_from(query.subquery()))).scalar_one()
     paged = query.order_by(Player.full_name).offset((page - 1) * page_size).limit(page_size)
     players = (await session.execute(paged)).scalars().all()
@@ -55,28 +67,40 @@ async def get_player(session: AsyncSession, player_id: int) -> PlayerDetail | No
         return None
 
     query = (
-        select(PlayerGameStats, Game.game_date)
+        select(PlayerGameStats, Game)
         .join(Game, Game.game_id == PlayerGameStats.game_id)
         .where(PlayerGameStats.player_id == player_id)
         .order_by(Game.game_date.desc())
         .limit(RECENT_GAMES)
     )
     rows = (await session.execute(query)).all()
-    recent = [
-        PlayerGameLog(
-            game_id=stat.game_id,
-            game_date=game_date,
-            team_id=stat.team_id,
-            opponent_team_id=stat.opponent_team_id,
-            is_home=stat.is_home,
-            min=None if stat.min is None else float(stat.min),
-            pts=stat.pts,
-            reb=stat.reb,
-            ast=stat.ast,
-            fg3m=stat.fg3m,
+    abbreviations = {
+        team.team_id: team.abbreviation
+        for team in (await session.execute(select(Team))).scalars().all()
+    }
+    recent = []
+    for stat, game in rows:
+        won: bool | None = None
+        if game.home_score is not None and game.away_score is not None:
+            home_won = game.home_score > game.away_score
+            won = home_won if stat.is_home else not home_won
+        recent.append(
+            PlayerGameLog(
+                game_id=stat.game_id,
+                game_date=game.game_date,
+                team_id=stat.team_id,
+                opponent_team_id=stat.opponent_team_id,
+                team_abbreviation=abbreviations.get(stat.team_id),
+                opponent_abbreviation=abbreviations.get(stat.opponent_team_id),
+                is_home=stat.is_home,
+                won=won,
+                min=None if stat.min is None else float(stat.min),
+                pts=stat.pts,
+                reb=stat.reb,
+                ast=stat.ast,
+                fg3m=stat.fg3m,
+            )
         )
-        for stat, game_date in rows
-    ]
     return PlayerDetail(
         **_to_summary(player).model_dump(),
         height_inches=player.height_inches,

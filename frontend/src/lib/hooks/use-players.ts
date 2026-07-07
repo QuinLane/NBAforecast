@@ -3,6 +3,7 @@ import { apiClient } from "../api-client/client";
 
 export type PlayersParams = {
   active?: boolean;
+  with_stats?: boolean;
   page?: number;
   page_size?: number;
 };

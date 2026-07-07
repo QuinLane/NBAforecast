@@ -84,6 +84,7 @@ def _player_rows() -> list[dict[str, Any]]:
             "full_name": player["full_name"],
             "first_name": player["first_name"],
             "last_name": player["last_name"],
+            "is_active": bool(player.get("is_active", False)),
         }
         for player in static_players.get_players()
     ]

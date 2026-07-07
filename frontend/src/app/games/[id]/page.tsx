@@ -86,14 +86,48 @@ export default function GameDetailPage({
       {predQ.isPending ? (
         <div className="h-8 w-48 rounded bg-zinc-800/50 animate-pulse" />
       ) : prediction ? (
-        <div className="flex items-baseline gap-2">
-          <span className="text-4xl font-bold text-emerald-400">
-            {(prediction.win_prob * 100).toFixed(1)}%
-          </span>
-          <span className="text-zinc-500 text-sm">
-            home win probability
-          </span>
-        </div>
+        <section className="space-y-2">
+          <div className="flex items-baseline gap-2">
+            <span className="text-4xl font-bold text-emerald-400">
+              {(prediction.win_prob * 100).toFixed(1)}%
+            </span>
+            <span className="text-zinc-500 text-sm">
+              chance {game?.home_team.abbreviation ?? "the home team"} beats{" "}
+              {game?.away_team.abbreviation ?? "the away team"}
+            </span>
+          </div>
+          {(prediction.margin != null || prediction.total != null) && (
+            <p className="text-sm text-zinc-400">
+              {prediction.margin != null && game && (
+                <>
+                  Projected margin:{" "}
+                  <span className="font-mono text-zinc-200">
+                    {prediction.margin >= 0
+                      ? `${game.home_team.abbreviation} by ${prediction.margin.toFixed(1)}`
+                      : `${game.away_team.abbreviation} by ${Math.abs(prediction.margin).toFixed(1)}`}
+                  </span>
+                </>
+              )}
+              {prediction.margin != null && prediction.total != null && " · "}
+              {prediction.total != null && (
+                <>
+                  projected total:{" "}
+                  <span className="font-mono text-zinc-200">
+                    {prediction.total.toFixed(0)} pts
+                  </span>
+                </>
+              )}
+            </p>
+          )}
+          <p className="text-xs text-zinc-600 max-w-prose">
+            How to read this: if this matchup were played many times from exactly these
+            pre-game conditions, the model expects{" "}
+            {game?.home_team.abbreviation ?? "the home team"} to win about{" "}
+            {Math.round(prediction.win_prob * 100)} of every 100 — built only from
+            information available before tip-off. The breakdown below shows which factors
+            moved it away from a 50/50 baseline.
+          </p>
+        </section>
       ) : predQ.isError ? (
         <p className="text-zinc-500 text-sm">Prediction unavailable.</p>
       ) : null}

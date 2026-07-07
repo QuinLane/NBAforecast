@@ -21,12 +21,13 @@ router = APIRouter(prefix="/players", tags=["players"])
 @router.get("", response_model=Page[PlayerSummary])
 async def list_players(
     active: bool | None = None,
+    with_stats: bool = False,
     page: int = 1,
     page_size: int = 25,
     session: AsyncSession = Depends(get_db_session),
 ) -> Page[PlayerSummary]:
     return await services.players.list_players(
-        session, active=active, page=page, page_size=page_size
+        session, active=active, with_stats=with_stats, page=page, page_size=page_size
     )
 
 

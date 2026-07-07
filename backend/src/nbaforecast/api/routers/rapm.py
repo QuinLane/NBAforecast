@@ -18,13 +18,20 @@ async def rapm_leaderboard(
     window: int = services.rapm.DEFAULT_WINDOW,
     as_of: date_type | None = None,
     sort: str = "rapm",
+    min_poss: int = services.rapm.DEFAULT_MIN_POSS,
     page: int = 1,
     page_size: int = 25,
     session: AsyncSession = Depends(get_db_session),
 ) -> Page[RapmEntry]:
     try:
         return await services.rapm.rapm_leaderboard(
-            session, window=window, as_of=as_of, sort=sort, page=page, page_size=page_size
+            session,
+            window=window,
+            as_of=as_of,
+            sort=sort,
+            min_poss=min_poss,
+            page=page,
+            page_size=page_size,
         )
     except KeyError as exc:
         raise HTTPException(

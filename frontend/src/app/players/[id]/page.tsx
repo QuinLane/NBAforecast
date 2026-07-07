@@ -123,16 +123,30 @@ export default function PlayerDetailPage({
       ) : null}
 
       {/* Props projections for the player's most recent game */}
-      {latestGame && (
+      {player && latestGame && (
         <section className="space-y-2">
           <h2 className="text-sm font-semibold text-zinc-300">
             Projected props
             <span className="text-xs text-zinc-600 font-normal">
               {" "}
-              · game {latestGame}
+              ·{" "}
+              {player.recent_games[0].team_abbreviation ?? "—"}{" "}
+              {player.recent_games[0].is_home ? "vs" : "@"}{" "}
+              {player.recent_games[0].opponent_abbreviation ?? "—"},{" "}
+              {player.recent_games[0].game_date}
             </span>
           </h2>
           <PropsBoard playerId={playerId} gameId={latestGame} />
+        </section>
+      )}
+
+      {/* Players from the historical index with no data in the loaded seasons */}
+      {player && player.recent_games.length === 0 && (
+        <section className="rounded-lg border border-zinc-800 bg-zinc-900/40 p-4">
+          <p className="text-sm text-zinc-400">
+            No games for {player.full_name} in the loaded seasons — projections and game
+            logs appear once a season they played in has been ingested.
+          </p>
         </section>
       )}
 
@@ -144,6 +158,7 @@ export default function PlayerDetailPage({
             <thead>
               <tr className="text-left text-xs text-zinc-500 border-b border-zinc-800">
                 <th className="py-2 pr-2 font-medium">Date</th>
+                <th className="py-2 px-2 font-medium">Matchup</th>
                 <th className="py-2 px-2 font-medium text-right">MIN</th>
                 <th className="py-2 px-2 font-medium text-right">PTS</th>
                 <th className="py-2 px-2 font-medium text-right">REB</th>
@@ -161,6 +176,24 @@ export default function PlayerDetailPage({
                     <Link href={`/games/${g.game_id}`} className="hover:underline">
                       {g.game_date}
                     </Link>
+                  </td>
+                  <td className="py-2 px-2 font-sans whitespace-nowrap">
+                    <span
+                      aria-label={g.won == null ? undefined : g.won ? "won" : "lost"}
+                      className={
+                        g.won == null
+                          ? "text-zinc-600"
+                          : g.won
+                            ? "text-emerald-400"
+                            : "text-rose-400"
+                      }
+                    >
+                      {g.won == null ? "·" : g.won ? "▸" : "◂"}
+                    </span>{" "}
+                    <span className="text-zinc-300">
+                      {g.team_abbreviation ?? "—"} {g.is_home ? "vs" : "@"}{" "}
+                      {g.opponent_abbreviation ?? "—"}
+                    </span>
                   </td>
                   <td className="py-2 px-2 text-right text-zinc-500">
                     {g.min == null ? "—" : g.min.toFixed(0)}

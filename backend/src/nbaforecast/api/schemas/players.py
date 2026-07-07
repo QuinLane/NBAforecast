@@ -23,7 +23,11 @@ class PlayerGameLog(BaseModel):
     game_date: date
     team_id: int
     opponent_team_id: int
+    team_abbreviation: str | None
+    opponent_abbreviation: str | None
     is_home: bool
+    # Whether this player's team won; None while the game has no final score.
+    won: bool | None
     min: float | None
     pts: int
     reb: int

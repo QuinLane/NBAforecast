@@ -1,1920 +1,1976 @@
 {
-  "openapi": "3.1.0",
-  "info": {
-    "title": "NBAforecast",
-    "description": "Explainable NBA predictions, stats hub, and live win probability.",
-    "version": "0.1.0"
-  },
-  "paths": {
-    "/health": {
-      "get": {
-        "tags": [
-          "meta"
-        ],
-        "summary": "Health",
-        "operationId": "health_health_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "additionalProperties": {
-                    "type": "string"
-                  },
-                  "type": "object",
-                  "title": "Response Health Health Get"
-                }
-              }
-            }
-          }
+ "openapi": "3.1.0",
+ "info": {
+  "title": "NBAforecast",
+  "description": "Explainable NBA predictions, stats hub, and live win probability.",
+  "version": "0.1.0"
+ },
+ "paths": {
+  "/health": {
+   "get": {
+    "tags": [
+     "meta"
+    ],
+    "summary": "Health",
+    "operationId": "health_health_get",
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": {
+          "type": "string"
+         },
+         "type": "object",
+         "title": "Response Health Health Get"
         }
+       }
       }
-    },
-    "/api/v1/games": {
-      "get": {
-        "tags": [
-          "games"
-        ],
-        "summary": "List Games",
-        "operationId": "list_games_api_v1_games_get",
-        "parameters": [
-          {
-            "name": "game_date",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string",
-                  "format": "date"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Game Date"
-            }
-          },
-          {
-            "name": "season",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Season"
-            }
-          },
-          {
-            "name": "team",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "integer"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Team"
-            }
-          },
-          {
-            "name": "page",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "default": 1,
-              "title": "Page"
-            }
-          },
-          {
-            "name": "page_size",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "default": 25,
-              "title": "Page Size"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Page_GameSummary_"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/games/{game_id}": {
-      "get": {
-        "tags": [
-          "games"
-        ],
-        "summary": "Get Game",
-        "operationId": "get_game_api_v1_games__game_id__get",
-        "parameters": [
-          {
-            "name": "game_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Game Id"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/GameDetail"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/games/{game_id}/prediction": {
-      "get": {
-        "tags": [
-          "games"
-        ],
-        "summary": "Get Game Prediction",
-        "operationId": "get_game_prediction_api_v1_games__game_id__prediction_get",
-        "parameters": [
-          {
-            "name": "game_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Game Id"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/GamePrediction"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/games/{game_id}/prediction/full-explanation": {
-      "get": {
-        "tags": [
-          "games"
-        ],
-        "summary": "Get Game Prediction Full Explanation",
-        "operationId": "get_game_prediction_full_explanation_api_v1_games__game_id__prediction_full_explanation_get",
-        "parameters": [
-          {
-            "name": "game_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Game Id"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/GamePrediction"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/teams": {
-      "get": {
-        "tags": [
-          "teams"
-        ],
-        "summary": "List Teams",
-        "operationId": "list_teams_api_v1_teams_get",
-        "parameters": [
-          {
-            "name": "page",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "default": 1,
-              "title": "Page"
-            }
-          },
-          {
-            "name": "page_size",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "default": 50,
-              "title": "Page Size"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Page_TeamSummary_"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/teams/{team_id}": {
-      "get": {
-        "tags": [
-          "teams"
-        ],
-        "summary": "Get Team",
-        "operationId": "get_team_api_v1_teams__team_id__get",
-        "parameters": [
-          {
-            "name": "team_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "title": "Team Id"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/nbaforecast__api__schemas__players__TeamSummary"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/players": {
-      "get": {
-        "tags": [
-          "players"
-        ],
-        "summary": "List Players",
-        "operationId": "list_players_api_v1_players_get",
-        "parameters": [
-          {
-            "name": "active",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "boolean"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Active"
-            }
-          },
-          {
-            "name": "page",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "default": 1,
-              "title": "Page"
-            }
-          },
-          {
-            "name": "page_size",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "default": 25,
-              "title": "Page Size"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Page_PlayerSummary_"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/players/{player_id}": {
-      "get": {
-        "tags": [
-          "players"
-        ],
-        "summary": "Get Player",
-        "operationId": "get_player_api_v1_players__player_id__get",
-        "parameters": [
-          {
-            "name": "player_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "title": "Player Id"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PlayerDetail"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/players/{player_id}/shots": {
-      "get": {
-        "tags": [
-          "players"
-        ],
-        "summary": "Get Player Shots",
-        "operationId": "get_player_shots_api_v1_players__player_id__shots_get",
-        "parameters": [
-          {
-            "name": "player_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "title": "Player Id"
-            }
-          },
-          {
-            "name": "season",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Season"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ShotChartEntry"
-                  },
-                  "title": "Response Get Player Shots Api V1 Players  Player Id  Shots Get"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/players/{player_id}/rapm": {
-      "get": {
-        "tags": [
-          "players"
-        ],
-        "summary": "Get Player Rapm",
-        "operationId": "get_player_rapm_api_v1_players__player_id__rapm_get",
-        "parameters": [
-          {
-            "name": "player_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "title": "Player Id"
-            }
-          },
-          {
-            "name": "window",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "default": 3,
-              "title": "Window"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/RapmHistoryEntry"
-                  },
-                  "title": "Response Get Player Rapm Api V1 Players  Player Id  Rapm Get"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/players/{player_id}/props": {
-      "get": {
-        "tags": [
-          "players"
-        ],
-        "summary": "Get Player Props",
-        "operationId": "get_player_props_api_v1_players__player_id__props_get",
-        "parameters": [
-          {
-            "name": "player_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "title": "Player Id"
-            }
-          },
-          {
-            "name": "game_id",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Game Id"
-            }
-          },
-          {
-            "name": "full",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "boolean",
-              "default": false,
-              "title": "Full"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/PropsProjection"
-                  },
-                  "title": "Response Get Player Props Api V1 Players  Player Id  Props Get"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/rapm": {
-      "get": {
-        "tags": [
-          "rapm"
-        ],
-        "summary": "Rapm Leaderboard",
-        "operationId": "rapm_leaderboard_api_v1_rapm_get",
-        "parameters": [
-          {
-            "name": "window",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "default": 3,
-              "title": "Window"
-            }
-          },
-          {
-            "name": "as_of",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string",
-                  "format": "date"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "As Of"
-            }
-          },
-          {
-            "name": "sort",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": "rapm",
-              "title": "Sort"
-            }
-          },
-          {
-            "name": "page",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "default": 1,
-              "title": "Page"
-            }
-          },
-          {
-            "name": "page_size",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "default": 25,
-              "title": "Page Size"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Page_RapmEntry_"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/stats/leaderboards": {
-      "get": {
-        "tags": [
-          "stats"
-        ],
-        "summary": "Leaderboards",
-        "operationId": "leaderboards_api_v1_stats_leaderboards_get",
-        "parameters": [
-          {
-            "name": "stat",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Stat"
-            }
-          },
-          {
-            "name": "season",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Season"
-            }
-          },
-          {
-            "name": "page",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "default": 1,
-              "title": "Page"
-            }
-          },
-          {
-            "name": "page_size",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "default": 25,
-              "title": "Page Size"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Page_LeaderboardEntry_"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
+     }
     }
+   }
   },
-  "components": {
-    "schemas": {
-      "Contribution": {
-        "properties": {
-          "feature": {
-            "type": "string",
-            "title": "Feature"
-          },
-          "display_label": {
-            "type": "string",
-            "title": "Display Label"
-          },
-          "raw_value": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "integer"
-              },
-              {
-                "type": "string"
-              },
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Raw Value"
-          },
-          "formatted_value": {
-            "type": "string",
-            "title": "Formatted Value"
-          },
-          "contribution": {
-            "type": "number",
-            "title": "Contribution"
-          },
-          "direction": {
-            "type": "string",
-            "enum": [
-              "up",
-              "down"
-            ],
-            "title": "Direction"
-          }
+  "/api/v1/games": {
+   "get": {
+    "tags": [
+     "games"
+    ],
+    "summary": "List Games",
+    "operationId": "list_games_api_v1_games_get",
+    "parameters": [
+     {
+      "name": "game_date",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string",
+         "format": "date"
         },
-        "type": "object",
-        "required": [
-          "feature",
-          "display_label",
-          "raw_value",
-          "formatted_value",
-          "contribution",
-          "direction"
-        ],
-        "title": "Contribution",
-        "description": "One feature's signed contribution to a single prediction.\n\n``display_label``/``formatted_value`` are placeholders (the raw feature name and\n``str(raw_value)``) until T2.11's humanizer decorates them \u2014 see\n``explain/explainers.py``'s module docstring."
-      },
-      "Explanation": {
-        "properties": {
-          "baseline": {
-            "type": "number",
-            "title": "Baseline"
-          },
-          "prediction": {
-            "type": "number",
-            "title": "Prediction"
-          },
-          "contributions": {
-            "items": {
-              "$ref": "#/components/schemas/Contribution"
-            },
-            "type": "array",
-            "title": "Contributions"
-          },
-          "units": {
-            "$ref": "#/components/schemas/ExplanationUnits"
-          },
-          "notes": {
-            "type": "string",
-            "title": "Notes"
-          }
-        },
-        "type": "object",
-        "required": [
-          "baseline",
-          "prediction",
-          "contributions",
-          "units",
-          "notes"
-        ],
-        "title": "Explanation",
-        "description": "The \u00a75 explanation contract \u2014 every model head's ``explain()`` returns this shape.\n\n``contributions`` is sorted by ``abs(contribution)`` descending (\u00a75: \"sorted by magnitude\")\nso the frontend can show the top-N headline drivers with the rest expandable. Additivity\nholds in whichever ``units`` the explanation was computed in:\n``sum(c.contribution for c in contributions) == prediction - baseline`` (T2.12 verifies this\nfor the SHAP path within floating-point tolerance)."
-      },
-      "ExplanationUnits": {
-        "type": "string",
-        "enum": [
-          "probability_points",
-          "log_odds",
-          "points",
-          "rebounds",
-          "assists",
-          "three_pointers_made"
-        ],
-        "title": "ExplanationUnits",
-        "description": "What scale ``Explanation.baseline``/``prediction``/``Contribution.contribution`` are in."
-      },
-      "GameDetail": {
-        "properties": {
-          "game_id": {
-            "type": "string",
-            "title": "Game Id"
-          },
-          "season": {
-            "type": "string",
-            "title": "Season"
-          },
-          "game_date": {
-            "type": "string",
-            "format": "date",
-            "title": "Game Date"
-          },
-          "home_team": {
-            "$ref": "#/components/schemas/nbaforecast__api__schemas__games__TeamSummary"
-          },
-          "away_team": {
-            "$ref": "#/components/schemas/nbaforecast__api__schemas__games__TeamSummary"
-          },
-          "home_score": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Home Score"
-          },
-          "away_score": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Away Score"
-          },
-          "status": {
-            "type": "string",
-            "title": "Status"
-          },
-          "game_datetime": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Game Datetime"
-          },
-          "num_periods": {
-            "type": "integer",
-            "title": "Num Periods"
-          }
-        },
-        "type": "object",
-        "required": [
-          "game_id",
-          "season",
-          "game_date",
-          "home_team",
-          "away_team",
-          "home_score",
-          "away_score",
-          "status",
-          "game_datetime",
-          "num_periods"
-        ],
-        "title": "GameDetail",
-        "description": "Full game record \u2014 backend-api.md \u00a73 ``GET /games/{game_id}``."
-      },
-      "GamePrediction": {
-        "properties": {
-          "game_id": {
-            "type": "string",
-            "title": "Game Id"
-          },
-          "win_prob": {
-            "type": "number",
-            "title": "Win Prob"
-          },
-          "margin": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Margin"
-          },
-          "total": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Total"
-          },
-          "market": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Market"
-          },
-          "explanation": {
-            "$ref": "#/components/schemas/Explanation"
-          }
-        },
-        "type": "object",
-        "required": [
-          "game_id",
-          "win_prob",
-          "explanation"
-        ],
-        "title": "GamePrediction",
-        "description": "backend-api.md \u00a74 ``GamePrediction``.\n\n``margin``/``total`` are reserved for the regressor heads (T3.1, M3 scope) \u2014 ``None`` until\nthen. ``market`` is reserved for the v2 odds-comparison feature (modeling.md \u00a710)."
-      },
-      "GameSummary": {
-        "properties": {
-          "game_id": {
-            "type": "string",
-            "title": "Game Id"
-          },
-          "season": {
-            "type": "string",
-            "title": "Season"
-          },
-          "game_date": {
-            "type": "string",
-            "format": "date",
-            "title": "Game Date"
-          },
-          "home_team": {
-            "$ref": "#/components/schemas/nbaforecast__api__schemas__games__TeamSummary"
-          },
-          "away_team": {
-            "$ref": "#/components/schemas/nbaforecast__api__schemas__games__TeamSummary"
-          },
-          "home_score": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Home Score"
-          },
-          "away_score": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Away Score"
-          },
-          "status": {
-            "type": "string",
-            "title": "Status"
-          }
-        },
-        "type": "object",
-        "required": [
-          "game_id",
-          "season",
-          "game_date",
-          "home_team",
-          "away_team",
-          "home_score",
-          "away_score",
-          "status"
-        ],
-        "title": "GameSummary",
-        "description": "One row of a games list \u2014 backend-api.md \u00a73 ``GET /games``."
-      },
-      "HTTPValidationError": {
-        "properties": {
-          "detail": {
-            "items": {
-              "$ref": "#/components/schemas/ValidationError"
-            },
-            "type": "array",
-            "title": "Detail"
-          }
-        },
-        "type": "object",
-        "title": "HTTPValidationError"
-      },
-      "LeaderboardEntry": {
-        "properties": {
-          "player_id": {
-            "type": "integer",
-            "title": "Player Id"
-          },
-          "full_name": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Full Name"
-          },
-          "stat": {
-            "type": "string",
-            "title": "Stat"
-          },
-          "value": {
-            "type": "number",
-            "title": "Value"
-          },
-          "games_played": {
-            "type": "integer",
-            "title": "Games Played"
-          }
-        },
-        "type": "object",
-        "required": [
-          "player_id",
-          "full_name",
-          "stat",
-          "value",
-          "games_played"
-        ],
-        "title": "LeaderboardEntry",
-        "description": "One row of a generic stat leaderboard \u2014 ``GET /stats/leaderboards``."
-      },
-      "Page_GameSummary_": {
-        "properties": {
-          "items": {
-            "items": {
-              "$ref": "#/components/schemas/GameSummary"
-            },
-            "type": "array",
-            "title": "Items"
-          },
-          "total": {
-            "type": "integer",
-            "title": "Total"
-          },
-          "page": {
-            "type": "integer",
-            "title": "Page"
-          },
-          "page_size": {
-            "type": "integer",
-            "title": "Page Size"
-          }
-        },
-        "type": "object",
-        "required": [
-          "items",
-          "total",
-          "page",
-          "page_size"
-        ],
-        "title": "Page[GameSummary]"
-      },
-      "Page_LeaderboardEntry_": {
-        "properties": {
-          "items": {
-            "items": {
-              "$ref": "#/components/schemas/LeaderboardEntry"
-            },
-            "type": "array",
-            "title": "Items"
-          },
-          "total": {
-            "type": "integer",
-            "title": "Total"
-          },
-          "page": {
-            "type": "integer",
-            "title": "Page"
-          },
-          "page_size": {
-            "type": "integer",
-            "title": "Page Size"
-          }
-        },
-        "type": "object",
-        "required": [
-          "items",
-          "total",
-          "page",
-          "page_size"
-        ],
-        "title": "Page[LeaderboardEntry]"
-      },
-      "Page_PlayerSummary_": {
-        "properties": {
-          "items": {
-            "items": {
-              "$ref": "#/components/schemas/PlayerSummary"
-            },
-            "type": "array",
-            "title": "Items"
-          },
-          "total": {
-            "type": "integer",
-            "title": "Total"
-          },
-          "page": {
-            "type": "integer",
-            "title": "Page"
-          },
-          "page_size": {
-            "type": "integer",
-            "title": "Page Size"
-          }
-        },
-        "type": "object",
-        "required": [
-          "items",
-          "total",
-          "page",
-          "page_size"
-        ],
-        "title": "Page[PlayerSummary]"
-      },
-      "Page_RapmEntry_": {
-        "properties": {
-          "items": {
-            "items": {
-              "$ref": "#/components/schemas/RapmEntry"
-            },
-            "type": "array",
-            "title": "Items"
-          },
-          "total": {
-            "type": "integer",
-            "title": "Total"
-          },
-          "page": {
-            "type": "integer",
-            "title": "Page"
-          },
-          "page_size": {
-            "type": "integer",
-            "title": "Page Size"
-          }
-        },
-        "type": "object",
-        "required": [
-          "items",
-          "total",
-          "page",
-          "page_size"
-        ],
-        "title": "Page[RapmEntry]"
-      },
-      "Page_TeamSummary_": {
-        "properties": {
-          "items": {
-            "items": {
-              "$ref": "#/components/schemas/nbaforecast__api__schemas__players__TeamSummary"
-            },
-            "type": "array",
-            "title": "Items"
-          },
-          "total": {
-            "type": "integer",
-            "title": "Total"
-          },
-          "page": {
-            "type": "integer",
-            "title": "Page"
-          },
-          "page_size": {
-            "type": "integer",
-            "title": "Page Size"
-          }
-        },
-        "type": "object",
-        "required": [
-          "items",
-          "total",
-          "page",
-          "page_size"
-        ],
-        "title": "Page[TeamSummary]"
-      },
-      "PlayerDetail": {
-        "properties": {
-          "player_id": {
-            "type": "integer",
-            "title": "Player Id"
-          },
-          "full_name": {
-            "type": "string",
-            "title": "Full Name"
-          },
-          "position": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Position"
-          },
-          "is_active": {
-            "type": "boolean",
-            "title": "Is Active"
-          },
-          "height_inches": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Height Inches"
-          },
-          "weight_lbs": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Weight Lbs"
-          },
-          "birthdate": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Birthdate"
-          },
-          "recent_games": {
-            "items": {
-              "$ref": "#/components/schemas/PlayerGameLog"
-            },
-            "type": "array",
-            "title": "Recent Games"
-          }
-        },
-        "type": "object",
-        "required": [
-          "player_id",
-          "full_name",
-          "position",
-          "is_active",
-          "height_inches",
-          "weight_lbs",
-          "birthdate",
-          "recent_games"
-        ],
-        "title": "PlayerDetail",
-        "description": "Full player profile \u2014 ``GET /players/{player_id}`` (profile + recent game logs)."
-      },
-      "PlayerGameLog": {
-        "properties": {
-          "game_id": {
-            "type": "string",
-            "title": "Game Id"
-          },
-          "game_date": {
-            "type": "string",
-            "format": "date",
-            "title": "Game Date"
-          },
-          "team_id": {
-            "type": "integer",
-            "title": "Team Id"
-          },
-          "opponent_team_id": {
-            "type": "integer",
-            "title": "Opponent Team Id"
-          },
-          "is_home": {
-            "type": "boolean",
-            "title": "Is Home"
-          },
-          "min": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Min"
-          },
-          "pts": {
-            "type": "integer",
-            "title": "Pts"
-          },
-          "reb": {
-            "type": "integer",
-            "title": "Reb"
-          },
-          "ast": {
-            "type": "integer",
-            "title": "Ast"
-          },
-          "fg3m": {
-            "type": "integer",
-            "title": "Fg3M"
-          }
-        },
-        "type": "object",
-        "required": [
-          "game_id",
-          "game_date",
-          "team_id",
-          "opponent_team_id",
-          "is_home",
-          "min",
-          "pts",
-          "reb",
-          "ast",
-          "fg3m"
-        ],
-        "title": "PlayerGameLog",
-        "description": "One recent game line on a player's profile."
-      },
-      "PlayerSummary": {
-        "properties": {
-          "player_id": {
-            "type": "integer",
-            "title": "Player Id"
-          },
-          "full_name": {
-            "type": "string",
-            "title": "Full Name"
-          },
-          "position": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Position"
-          },
-          "is_active": {
-            "type": "boolean",
-            "title": "Is Active"
-          }
-        },
-        "type": "object",
-        "required": [
-          "player_id",
-          "full_name",
-          "position",
-          "is_active"
-        ],
-        "title": "PlayerSummary",
-        "description": "One row of a players list \u2014 ``GET /players``."
-      },
-      "PropsProjection": {
-        "properties": {
-          "player_id": {
-            "type": "integer",
-            "title": "Player Id"
-          },
-          "game_id": {
-            "type": "string",
-            "title": "Game Id"
-          },
-          "stat": {
-            "type": "string",
-            "title": "Stat"
-          },
-          "point": {
-            "type": "number",
-            "title": "Point"
-          },
-          "interval_low": {
-            "type": "number",
-            "title": "Interval Low"
-          },
-          "interval_high": {
-            "type": "number",
-            "title": "Interval High"
-          },
-          "explanation": {
-            "$ref": "#/components/schemas/Explanation"
-          }
-        },
-        "type": "object",
-        "required": [
-          "player_id",
-          "game_id",
-          "stat",
-          "point",
-          "interval_low",
-          "interval_high",
-          "explanation"
-        ],
-        "title": "PropsProjection",
-        "description": "A single-stat props projection \u2014 backend-api.md \u00a74 ``PropsProjection``."
-      },
-      "RapmEntry": {
-        "properties": {
-          "player_id": {
-            "type": "integer",
-            "title": "Player Id"
-          },
-          "full_name": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Full Name"
-          },
-          "as_of_date": {
-            "type": "string",
-            "format": "date",
-            "title": "As Of Date"
-          },
-          "window": {
-            "type": "integer",
-            "title": "Window"
-          },
-          "orapm": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Orapm"
-          },
-          "drapm": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Drapm"
-          },
-          "rapm": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Rapm"
-          },
-          "possessions": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Possessions"
-          }
-        },
-        "type": "object",
-        "required": [
-          "player_id",
-          "full_name",
-          "as_of_date",
-          "window",
-          "orapm",
-          "drapm",
-          "rapm",
-          "possessions"
-        ],
-        "title": "RapmEntry",
-        "description": "One leaderboard row \u2014 a player's RAPM from a single snapshot (backend-api.md \u00a74)."
-      },
-      "RapmHistoryEntry": {
-        "properties": {
-          "as_of_date": {
-            "type": "string",
-            "format": "date",
-            "title": "As Of Date"
-          },
-          "window": {
-            "type": "integer",
-            "title": "Window"
-          },
-          "orapm": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Orapm"
-          },
-          "drapm": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Drapm"
-          },
-          "rapm": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Rapm"
-          },
-          "possessions": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Possessions"
-          }
-        },
-        "type": "object",
-        "required": [
-          "as_of_date",
-          "window",
-          "orapm",
-          "drapm",
-          "rapm",
-          "possessions"
-        ],
-        "title": "RapmHistoryEntry",
-        "description": "One point in a player's RAPM history \u2014 ``GET /players/{player_id}/rapm``."
-      },
-      "ShotChartEntry": {
-        "properties": {
-          "game_id": {
-            "type": "string",
-            "title": "Game Id"
-          },
-          "period": {
-            "type": "integer",
-            "title": "Period"
-          },
-          "loc_x": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Loc X"
-          },
-          "loc_y": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Loc Y"
-          },
-          "shot_distance": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Shot Distance"
-          },
-          "shot_zone": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Shot Zone"
-          },
-          "shot_type": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Shot Type"
-          },
-          "made": {
-            "type": "boolean",
-            "title": "Made"
-          },
-          "location_reliable": {
-            "type": "boolean",
-            "title": "Location Reliable"
-          }
-        },
-        "type": "object",
-        "required": [
-          "game_id",
-          "period",
-          "loc_x",
-          "loc_y",
-          "shot_distance",
-          "shot_zone",
-          "shot_type",
-          "made",
-          "location_reliable"
-        ],
-        "title": "ShotChartEntry",
-        "description": "One field-goal attempt for the shot chart \u2014 ``GET /players/{player_id}/shots``.\n\nRespects ``location_reliable`` (data-model): unreliable-location attempts still count toward\nmake/miss but carry a flag so the frontend can omit them from the spatial chart."
-      },
-      "ValidationError": {
-        "properties": {
-          "loc": {
-            "items": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "integer"
-                }
-              ]
-            },
-            "type": "array",
-            "title": "Location"
-          },
-          "msg": {
-            "type": "string",
-            "title": "Message"
-          },
-          "type": {
-            "type": "string",
-            "title": "Error Type"
-          },
-          "input": {
-            "title": "Input"
-          },
-          "ctx": {
-            "type": "object",
-            "title": "Context"
-          }
-        },
-        "type": "object",
-        "required": [
-          "loc",
-          "msg",
-          "type"
-        ],
-        "title": "ValidationError"
-      },
-      "nbaforecast__api__schemas__games__TeamSummary": {
-        "properties": {
-          "team_id": {
-            "type": "integer",
-            "title": "Team Id"
-          },
-          "abbreviation": {
-            "type": "string",
-            "title": "Abbreviation"
-          },
-          "full_name": {
-            "type": "string",
-            "title": "Full Name"
-          }
-        },
-        "type": "object",
-        "required": [
-          "team_id",
-          "abbreviation",
-          "full_name"
-        ],
-        "title": "TeamSummary",
-        "description": "The minimal team identity embedded in a game response."
-      },
-      "nbaforecast__api__schemas__players__TeamSummary": {
-        "properties": {
-          "team_id": {
-            "type": "integer",
-            "title": "Team Id"
-          },
-          "abbreviation": {
-            "type": "string",
-            "title": "Abbreviation"
-          },
-          "full_name": {
-            "type": "string",
-            "title": "Full Name"
-          },
-          "conference": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Conference"
-          },
-          "division": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Division"
-          }
-        },
-        "type": "object",
-        "required": [
-          "team_id",
-          "abbreviation",
-          "full_name",
-          "conference",
-          "division"
-        ],
-        "title": "TeamSummary",
-        "description": "One row of a teams list \u2014 ``GET /teams``."
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Game Date"
       }
+     },
+     {
+      "name": "season",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Season"
+      }
+     },
+     {
+      "name": "team",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "integer"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Team"
+      }
+     },
+     {
+      "name": "page",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer",
+       "default": 1,
+       "title": "Page"
+      }
+     },
+     {
+      "name": "page_size",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer",
+       "default": 25,
+       "title": "Page Size"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Page_GameSummary_"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
     }
+   }
+  },
+  "/api/v1/games/{game_id}": {
+   "get": {
+    "tags": [
+     "games"
+    ],
+    "summary": "Get Game",
+    "operationId": "get_game_api_v1_games__game_id__get",
+    "parameters": [
+     {
+      "name": "game_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "title": "Game Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/GameDetail"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/v1/games/{game_id}/prediction": {
+   "get": {
+    "tags": [
+     "games"
+    ],
+    "summary": "Get Game Prediction",
+    "operationId": "get_game_prediction_api_v1_games__game_id__prediction_get",
+    "parameters": [
+     {
+      "name": "game_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "title": "Game Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/GamePrediction"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/v1/games/{game_id}/prediction/full-explanation": {
+   "get": {
+    "tags": [
+     "games"
+    ],
+    "summary": "Get Game Prediction Full Explanation",
+    "operationId": "get_game_prediction_full_explanation_api_v1_games__game_id__prediction_full_explanation_get",
+    "parameters": [
+     {
+      "name": "game_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "title": "Game Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/GamePrediction"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/v1/teams": {
+   "get": {
+    "tags": [
+     "teams"
+    ],
+    "summary": "List Teams",
+    "operationId": "list_teams_api_v1_teams_get",
+    "parameters": [
+     {
+      "name": "page",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer",
+       "default": 1,
+       "title": "Page"
+      }
+     },
+     {
+      "name": "page_size",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer",
+       "default": 50,
+       "title": "Page Size"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Page_TeamSummary_"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/v1/teams/{team_id}": {
+   "get": {
+    "tags": [
+     "teams"
+    ],
+    "summary": "Get Team",
+    "operationId": "get_team_api_v1_teams__team_id__get",
+    "parameters": [
+     {
+      "name": "team_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer",
+       "title": "Team Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/nbaforecast__api__schemas__players__TeamSummary"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/v1/players": {
+   "get": {
+    "tags": [
+     "players"
+    ],
+    "summary": "List Players",
+    "operationId": "list_players_api_v1_players_get",
+    "parameters": [
+     {
+      "name": "active",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "boolean"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Active"
+      }
+     },
+     {
+      "name": "with_stats",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "boolean",
+       "default": false,
+       "title": "With Stats"
+      }
+     },
+     {
+      "name": "page",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer",
+       "default": 1,
+       "title": "Page"
+      }
+     },
+     {
+      "name": "page_size",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer",
+       "default": 25,
+       "title": "Page Size"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Page_PlayerSummary_"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/v1/players/{player_id}": {
+   "get": {
+    "tags": [
+     "players"
+    ],
+    "summary": "Get Player",
+    "operationId": "get_player_api_v1_players__player_id__get",
+    "parameters": [
+     {
+      "name": "player_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer",
+       "title": "Player Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/PlayerDetail"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/v1/players/{player_id}/shots": {
+   "get": {
+    "tags": [
+     "players"
+    ],
+    "summary": "Get Player Shots",
+    "operationId": "get_player_shots_api_v1_players__player_id__shots_get",
+    "parameters": [
+     {
+      "name": "player_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer",
+       "title": "Player Id"
+      }
+     },
+     {
+      "name": "season",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Season"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "array",
+         "items": {
+          "$ref": "#/components/schemas/ShotChartEntry"
+         },
+         "title": "Response Get Player Shots Api V1 Players  Player Id  Shots Get"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/v1/players/{player_id}/rapm": {
+   "get": {
+    "tags": [
+     "players"
+    ],
+    "summary": "Get Player Rapm",
+    "operationId": "get_player_rapm_api_v1_players__player_id__rapm_get",
+    "parameters": [
+     {
+      "name": "player_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer",
+       "title": "Player Id"
+      }
+     },
+     {
+      "name": "window",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer",
+       "default": 3,
+       "title": "Window"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "array",
+         "items": {
+          "$ref": "#/components/schemas/RapmHistoryEntry"
+         },
+         "title": "Response Get Player Rapm Api V1 Players  Player Id  Rapm Get"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/v1/players/{player_id}/props": {
+   "get": {
+    "tags": [
+     "players"
+    ],
+    "summary": "Get Player Props",
+    "operationId": "get_player_props_api_v1_players__player_id__props_get",
+    "parameters": [
+     {
+      "name": "player_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer",
+       "title": "Player Id"
+      }
+     },
+     {
+      "name": "game_id",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "title": "Game Id"
+      }
+     },
+     {
+      "name": "full",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "boolean",
+       "default": false,
+       "title": "Full"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "array",
+         "items": {
+          "$ref": "#/components/schemas/PropsProjection"
+         },
+         "title": "Response Get Player Props Api V1 Players  Player Id  Props Get"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/v1/rapm": {
+   "get": {
+    "tags": [
+     "rapm"
+    ],
+    "summary": "Rapm Leaderboard",
+    "operationId": "rapm_leaderboard_api_v1_rapm_get",
+    "parameters": [
+     {
+      "name": "window",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer",
+       "default": 3,
+       "title": "Window"
+      }
+     },
+     {
+      "name": "as_of",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string",
+         "format": "date"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "As Of"
+      }
+     },
+     {
+      "name": "sort",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "default": "rapm",
+       "title": "Sort"
+      }
+     },
+     {
+      "name": "min_poss",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer",
+       "default": 1000,
+       "title": "Min Poss"
+      }
+     },
+     {
+      "name": "page",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer",
+       "default": 1,
+       "title": "Page"
+      }
+     },
+     {
+      "name": "page_size",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer",
+       "default": 25,
+       "title": "Page Size"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Page_RapmEntry_"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/v1/stats/leaderboards": {
+   "get": {
+    "tags": [
+     "stats"
+    ],
+    "summary": "Leaderboards",
+    "operationId": "leaderboards_api_v1_stats_leaderboards_get",
+    "parameters": [
+     {
+      "name": "stat",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "title": "Stat"
+      }
+     },
+     {
+      "name": "season",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Season"
+      }
+     },
+     {
+      "name": "page",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer",
+       "default": 1,
+       "title": "Page"
+      }
+     },
+     {
+      "name": "page_size",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer",
+       "default": 25,
+       "title": "Page Size"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Page_LeaderboardEntry_"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
   }
+ },
+ "components": {
+  "schemas": {
+   "Contribution": {
+    "properties": {
+     "feature": {
+      "type": "string",
+      "title": "Feature"
+     },
+     "display_label": {
+      "type": "string",
+      "title": "Display Label"
+     },
+     "raw_value": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "integer"
+       },
+       {
+        "type": "string"
+       },
+       {
+        "type": "boolean"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Raw Value"
+     },
+     "formatted_value": {
+      "type": "string",
+      "title": "Formatted Value"
+     },
+     "contribution": {
+      "type": "number",
+      "title": "Contribution"
+     },
+     "direction": {
+      "type": "string",
+      "enum": [
+       "up",
+       "down"
+      ],
+      "title": "Direction"
+     }
+    },
+    "type": "object",
+    "required": [
+     "feature",
+     "display_label",
+     "raw_value",
+     "formatted_value",
+     "contribution",
+     "direction"
+    ],
+    "title": "Contribution",
+    "description": "One feature's signed contribution to a single prediction.\n\n``display_label``/``formatted_value`` are placeholders (the raw feature name and\n``str(raw_value)``) until T2.11's humanizer decorates them \u2014 see\n``explain/explainers.py``'s module docstring."
+   },
+   "Explanation": {
+    "properties": {
+     "baseline": {
+      "type": "number",
+      "title": "Baseline"
+     },
+     "prediction": {
+      "type": "number",
+      "title": "Prediction"
+     },
+     "contributions": {
+      "items": {
+       "$ref": "#/components/schemas/Contribution"
+      },
+      "type": "array",
+      "title": "Contributions"
+     },
+     "units": {
+      "$ref": "#/components/schemas/ExplanationUnits"
+     },
+     "notes": {
+      "type": "string",
+      "title": "Notes"
+     }
+    },
+    "type": "object",
+    "required": [
+     "baseline",
+     "prediction",
+     "contributions",
+     "units",
+     "notes"
+    ],
+    "title": "Explanation",
+    "description": "The \u00a75 explanation contract \u2014 every model head's ``explain()`` returns this shape.\n\n``contributions`` is sorted by ``abs(contribution)`` descending (\u00a75: \"sorted by magnitude\")\nso the frontend can show the top-N headline drivers with the rest expandable. Additivity\nholds in whichever ``units`` the explanation was computed in:\n``sum(c.contribution for c in contributions) == prediction - baseline`` (T2.12 verifies this\nfor the SHAP path within floating-point tolerance)."
+   },
+   "ExplanationUnits": {
+    "type": "string",
+    "enum": [
+     "probability_points",
+     "log_odds",
+     "points",
+     "rebounds",
+     "assists",
+     "three_pointers_made"
+    ],
+    "title": "ExplanationUnits",
+    "description": "What scale ``Explanation.baseline``/``prediction``/``Contribution.contribution`` are in."
+   },
+   "GameDetail": {
+    "properties": {
+     "game_id": {
+      "type": "string",
+      "title": "Game Id"
+     },
+     "season": {
+      "type": "string",
+      "title": "Season"
+     },
+     "game_date": {
+      "type": "string",
+      "format": "date",
+      "title": "Game Date"
+     },
+     "home_team": {
+      "$ref": "#/components/schemas/nbaforecast__api__schemas__games__TeamSummary"
+     },
+     "away_team": {
+      "$ref": "#/components/schemas/nbaforecast__api__schemas__games__TeamSummary"
+     },
+     "home_score": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Home Score"
+     },
+     "away_score": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Away Score"
+     },
+     "status": {
+      "type": "string",
+      "title": "Status"
+     },
+     "game_datetime": {
+      "anyOf": [
+       {
+        "type": "string",
+        "format": "date-time"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Game Datetime"
+     },
+     "num_periods": {
+      "type": "integer",
+      "title": "Num Periods"
+     }
+    },
+    "type": "object",
+    "required": [
+     "game_id",
+     "season",
+     "game_date",
+     "home_team",
+     "away_team",
+     "home_score",
+     "away_score",
+     "status",
+     "game_datetime",
+     "num_periods"
+    ],
+    "title": "GameDetail",
+    "description": "Full game record \u2014 backend-api.md \u00a73 ``GET /games/{game_id}``."
+   },
+   "GamePrediction": {
+    "properties": {
+     "game_id": {
+      "type": "string",
+      "title": "Game Id"
+     },
+     "win_prob": {
+      "type": "number",
+      "title": "Win Prob"
+     },
+     "margin": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Margin"
+     },
+     "total": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Total"
+     },
+     "market": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Market"
+     },
+     "explanation": {
+      "$ref": "#/components/schemas/Explanation"
+     }
+    },
+    "type": "object",
+    "required": [
+     "game_id",
+     "win_prob",
+     "explanation"
+    ],
+    "title": "GamePrediction",
+    "description": "backend-api.md \u00a74 ``GamePrediction``.\n\n``margin``/``total`` are reserved for the regressor heads (T3.1, M3 scope) \u2014 ``None`` until\nthen. ``market`` is reserved for the v2 odds-comparison feature (modeling.md \u00a710)."
+   },
+   "GameSummary": {
+    "properties": {
+     "game_id": {
+      "type": "string",
+      "title": "Game Id"
+     },
+     "season": {
+      "type": "string",
+      "title": "Season"
+     },
+     "game_date": {
+      "type": "string",
+      "format": "date",
+      "title": "Game Date"
+     },
+     "home_team": {
+      "$ref": "#/components/schemas/nbaforecast__api__schemas__games__TeamSummary"
+     },
+     "away_team": {
+      "$ref": "#/components/schemas/nbaforecast__api__schemas__games__TeamSummary"
+     },
+     "home_score": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Home Score"
+     },
+     "away_score": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Away Score"
+     },
+     "status": {
+      "type": "string",
+      "title": "Status"
+     }
+    },
+    "type": "object",
+    "required": [
+     "game_id",
+     "season",
+     "game_date",
+     "home_team",
+     "away_team",
+     "home_score",
+     "away_score",
+     "status"
+    ],
+    "title": "GameSummary",
+    "description": "One row of a games list \u2014 backend-api.md \u00a73 ``GET /games``."
+   },
+   "HTTPValidationError": {
+    "properties": {
+     "detail": {
+      "items": {
+       "$ref": "#/components/schemas/ValidationError"
+      },
+      "type": "array",
+      "title": "Detail"
+     }
+    },
+    "type": "object",
+    "title": "HTTPValidationError"
+   },
+   "LeaderboardEntry": {
+    "properties": {
+     "player_id": {
+      "type": "integer",
+      "title": "Player Id"
+     },
+     "full_name": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Full Name"
+     },
+     "stat": {
+      "type": "string",
+      "title": "Stat"
+     },
+     "value": {
+      "type": "number",
+      "title": "Value"
+     },
+     "games_played": {
+      "type": "integer",
+      "title": "Games Played"
+     }
+    },
+    "type": "object",
+    "required": [
+     "player_id",
+     "full_name",
+     "stat",
+     "value",
+     "games_played"
+    ],
+    "title": "LeaderboardEntry",
+    "description": "One row of a generic stat leaderboard \u2014 ``GET /stats/leaderboards``."
+   },
+   "Page_GameSummary_": {
+    "properties": {
+     "items": {
+      "items": {
+       "$ref": "#/components/schemas/GameSummary"
+      },
+      "type": "array",
+      "title": "Items"
+     },
+     "total": {
+      "type": "integer",
+      "title": "Total"
+     },
+     "page": {
+      "type": "integer",
+      "title": "Page"
+     },
+     "page_size": {
+      "type": "integer",
+      "title": "Page Size"
+     }
+    },
+    "type": "object",
+    "required": [
+     "items",
+     "total",
+     "page",
+     "page_size"
+    ],
+    "title": "Page[GameSummary]"
+   },
+   "Page_LeaderboardEntry_": {
+    "properties": {
+     "items": {
+      "items": {
+       "$ref": "#/components/schemas/LeaderboardEntry"
+      },
+      "type": "array",
+      "title": "Items"
+     },
+     "total": {
+      "type": "integer",
+      "title": "Total"
+     },
+     "page": {
+      "type": "integer",
+      "title": "Page"
+     },
+     "page_size": {
+      "type": "integer",
+      "title": "Page Size"
+     }
+    },
+    "type": "object",
+    "required": [
+     "items",
+     "total",
+     "page",
+     "page_size"
+    ],
+    "title": "Page[LeaderboardEntry]"
+   },
+   "Page_PlayerSummary_": {
+    "properties": {
+     "items": {
+      "items": {
+       "$ref": "#/components/schemas/PlayerSummary"
+      },
+      "type": "array",
+      "title": "Items"
+     },
+     "total": {
+      "type": "integer",
+      "title": "Total"
+     },
+     "page": {
+      "type": "integer",
+      "title": "Page"
+     },
+     "page_size": {
+      "type": "integer",
+      "title": "Page Size"
+     }
+    },
+    "type": "object",
+    "required": [
+     "items",
+     "total",
+     "page",
+     "page_size"
+    ],
+    "title": "Page[PlayerSummary]"
+   },
+   "Page_RapmEntry_": {
+    "properties": {
+     "items": {
+      "items": {
+       "$ref": "#/components/schemas/RapmEntry"
+      },
+      "type": "array",
+      "title": "Items"
+     },
+     "total": {
+      "type": "integer",
+      "title": "Total"
+     },
+     "page": {
+      "type": "integer",
+      "title": "Page"
+     },
+     "page_size": {
+      "type": "integer",
+      "title": "Page Size"
+     }
+    },
+    "type": "object",
+    "required": [
+     "items",
+     "total",
+     "page",
+     "page_size"
+    ],
+    "title": "Page[RapmEntry]"
+   },
+   "Page_TeamSummary_": {
+    "properties": {
+     "items": {
+      "items": {
+       "$ref": "#/components/schemas/nbaforecast__api__schemas__players__TeamSummary"
+      },
+      "type": "array",
+      "title": "Items"
+     },
+     "total": {
+      "type": "integer",
+      "title": "Total"
+     },
+     "page": {
+      "type": "integer",
+      "title": "Page"
+     },
+     "page_size": {
+      "type": "integer",
+      "title": "Page Size"
+     }
+    },
+    "type": "object",
+    "required": [
+     "items",
+     "total",
+     "page",
+     "page_size"
+    ],
+    "title": "Page[TeamSummary]"
+   },
+   "PlayerDetail": {
+    "properties": {
+     "player_id": {
+      "type": "integer",
+      "title": "Player Id"
+     },
+     "full_name": {
+      "type": "string",
+      "title": "Full Name"
+     },
+     "position": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Position"
+     },
+     "is_active": {
+      "type": "boolean",
+      "title": "Is Active"
+     },
+     "height_inches": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Height Inches"
+     },
+     "weight_lbs": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Weight Lbs"
+     },
+     "birthdate": {
+      "anyOf": [
+       {
+        "type": "string",
+        "format": "date"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Birthdate"
+     },
+     "recent_games": {
+      "items": {
+       "$ref": "#/components/schemas/PlayerGameLog"
+      },
+      "type": "array",
+      "title": "Recent Games"
+     }
+    },
+    "type": "object",
+    "required": [
+     "player_id",
+     "full_name",
+     "position",
+     "is_active",
+     "height_inches",
+     "weight_lbs",
+     "birthdate",
+     "recent_games"
+    ],
+    "title": "PlayerDetail",
+    "description": "Full player profile \u2014 ``GET /players/{player_id}`` (profile + recent game logs)."
+   },
+   "PlayerGameLog": {
+    "properties": {
+     "game_id": {
+      "type": "string",
+      "title": "Game Id"
+     },
+     "game_date": {
+      "type": "string",
+      "format": "date",
+      "title": "Game Date"
+     },
+     "team_id": {
+      "type": "integer",
+      "title": "Team Id"
+     },
+     "opponent_team_id": {
+      "type": "integer",
+      "title": "Opponent Team Id"
+     },
+     "team_abbreviation": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Team Abbreviation"
+     },
+     "opponent_abbreviation": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Opponent Abbreviation"
+     },
+     "is_home": {
+      "type": "boolean",
+      "title": "Is Home"
+     },
+     "won": {
+      "anyOf": [
+       {
+        "type": "boolean"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Won"
+     },
+     "min": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Min"
+     },
+     "pts": {
+      "type": "integer",
+      "title": "Pts"
+     },
+     "reb": {
+      "type": "integer",
+      "title": "Reb"
+     },
+     "ast": {
+      "type": "integer",
+      "title": "Ast"
+     },
+     "fg3m": {
+      "type": "integer",
+      "title": "Fg3M"
+     }
+    },
+    "type": "object",
+    "required": [
+     "game_id",
+     "game_date",
+     "team_id",
+     "opponent_team_id",
+     "team_abbreviation",
+     "opponent_abbreviation",
+     "is_home",
+     "won",
+     "min",
+     "pts",
+     "reb",
+     "ast",
+     "fg3m"
+    ],
+    "title": "PlayerGameLog",
+    "description": "One recent game line on a player's profile."
+   },
+   "PlayerSummary": {
+    "properties": {
+     "player_id": {
+      "type": "integer",
+      "title": "Player Id"
+     },
+     "full_name": {
+      "type": "string",
+      "title": "Full Name"
+     },
+     "position": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Position"
+     },
+     "is_active": {
+      "type": "boolean",
+      "title": "Is Active"
+     }
+    },
+    "type": "object",
+    "required": [
+     "player_id",
+     "full_name",
+     "position",
+     "is_active"
+    ],
+    "title": "PlayerSummary",
+    "description": "One row of a players list \u2014 ``GET /players``."
+   },
+   "PropsProjection": {
+    "properties": {
+     "player_id": {
+      "type": "integer",
+      "title": "Player Id"
+     },
+     "game_id": {
+      "type": "string",
+      "title": "Game Id"
+     },
+     "stat": {
+      "type": "string",
+      "title": "Stat"
+     },
+     "point": {
+      "type": "number",
+      "title": "Point"
+     },
+     "interval_low": {
+      "type": "number",
+      "title": "Interval Low"
+     },
+     "interval_high": {
+      "type": "number",
+      "title": "Interval High"
+     },
+     "explanation": {
+      "$ref": "#/components/schemas/Explanation"
+     }
+    },
+    "type": "object",
+    "required": [
+     "player_id",
+     "game_id",
+     "stat",
+     "point",
+     "interval_low",
+     "interval_high",
+     "explanation"
+    ],
+    "title": "PropsProjection",
+    "description": "A single-stat props projection \u2014 backend-api.md \u00a74 ``PropsProjection``."
+   },
+   "RapmEntry": {
+    "properties": {
+     "player_id": {
+      "type": "integer",
+      "title": "Player Id"
+     },
+     "full_name": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Full Name"
+     },
+     "as_of_date": {
+      "type": "string",
+      "format": "date",
+      "title": "As Of Date"
+     },
+     "window": {
+      "type": "integer",
+      "title": "Window"
+     },
+     "orapm": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Orapm"
+     },
+     "drapm": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Drapm"
+     },
+     "rapm": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Rapm"
+     },
+     "possessions": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Possessions"
+     }
+    },
+    "type": "object",
+    "required": [
+     "player_id",
+     "full_name",
+     "as_of_date",
+     "window",
+     "orapm",
+     "drapm",
+     "rapm",
+     "possessions"
+    ],
+    "title": "RapmEntry",
+    "description": "One leaderboard row \u2014 a player's RAPM from a single snapshot (backend-api.md \u00a74)."
+   },
+   "RapmHistoryEntry": {
+    "properties": {
+     "as_of_date": {
+      "type": "string",
+      "format": "date",
+      "title": "As Of Date"
+     },
+     "window": {
+      "type": "integer",
+      "title": "Window"
+     },
+     "orapm": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Orapm"
+     },
+     "drapm": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Drapm"
+     },
+     "rapm": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Rapm"
+     },
+     "possessions": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Possessions"
+     }
+    },
+    "type": "object",
+    "required": [
+     "as_of_date",
+     "window",
+     "orapm",
+     "drapm",
+     "rapm",
+     "possessions"
+    ],
+    "title": "RapmHistoryEntry",
+    "description": "One point in a player's RAPM history \u2014 ``GET /players/{player_id}/rapm``."
+   },
+   "ShotChartEntry": {
+    "properties": {
+     "game_id": {
+      "type": "string",
+      "title": "Game Id"
+     },
+     "period": {
+      "type": "integer",
+      "title": "Period"
+     },
+     "loc_x": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Loc X"
+     },
+     "loc_y": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Loc Y"
+     },
+     "shot_distance": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Shot Distance"
+     },
+     "shot_zone": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Shot Zone"
+     },
+     "shot_type": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Shot Type"
+     },
+     "made": {
+      "type": "boolean",
+      "title": "Made"
+     },
+     "location_reliable": {
+      "type": "boolean",
+      "title": "Location Reliable"
+     }
+    },
+    "type": "object",
+    "required": [
+     "game_id",
+     "period",
+     "loc_x",
+     "loc_y",
+     "shot_distance",
+     "shot_zone",
+     "shot_type",
+     "made",
+     "location_reliable"
+    ],
+    "title": "ShotChartEntry",
+    "description": "One field-goal attempt for the shot chart \u2014 ``GET /players/{player_id}/shots``.\n\nRespects ``location_reliable`` (data-model): unreliable-location attempts still count toward\nmake/miss but carry a flag so the frontend can omit them from the spatial chart."
+   },
+   "ValidationError": {
+    "properties": {
+     "loc": {
+      "items": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "integer"
+        }
+       ]
+      },
+      "type": "array",
+      "title": "Location"
+     },
+     "msg": {
+      "type": "string",
+      "title": "Message"
+     },
+     "type": {
+      "type": "string",
+      "title": "Error Type"
+     },
+     "input": {
+      "title": "Input"
+     },
+     "ctx": {
+      "type": "object",
+      "title": "Context"
+     }
+    },
+    "type": "object",
+    "required": [
+     "loc",
+     "msg",
+     "type"
+    ],
+    "title": "ValidationError"
+   },
+   "nbaforecast__api__schemas__games__TeamSummary": {
+    "properties": {
+     "team_id": {
+      "type": "integer",
+      "title": "Team Id"
+     },
+     "abbreviation": {
+      "type": "string",
+      "title": "Abbreviation"
+     },
+     "full_name": {
+      "type": "string",
+      "title": "Full Name"
+     }
+    },
+    "type": "object",
+    "required": [
+     "team_id",
+     "abbreviation",
+     "full_name"
+    ],
+    "title": "TeamSummary",
+    "description": "The minimal team identity embedded in a game response."
+   },
+   "nbaforecast__api__schemas__players__TeamSummary": {
+    "properties": {
+     "team_id": {
+      "type": "integer",
+      "title": "Team Id"
+     },
+     "abbreviation": {
+      "type": "string",
+      "title": "Abbreviation"
+     },
+     "full_name": {
+      "type": "string",
+      "title": "Full Name"
+     },
+     "conference": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Conference"
+     },
+     "division": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Division"
+     }
+    },
+    "type": "object",
+    "required": [
+     "team_id",
+     "abbreviation",
+     "full_name",
+     "conference",
+     "division"
+    ],
+    "title": "TeamSummary",
+    "description": "One row of a teams list \u2014 ``GET /teams``."
+   }
+  }
+ }
 }

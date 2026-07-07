@@ -10,6 +10,16 @@ const SORTS: { key: RapmSort; label: string }[] = [
   { key: "rapm", label: "RAPM" },
   { key: "orapm", label: "ORAPM" },
   { key: "drapm", label: "DRAPM" },
+  { key: "possessions", label: "Poss." },
+];
+
+// Possessions = sample size, not quality: ridge shrinkage tames small samples but can't
+// eliminate their noise, so the board filters to a minimum sample by default.
+const MIN_POSS_CHOICES = [
+  { value: 0, label: "All players" },
+  { value: 500, label: "500+ poss." },
+  { value: 1000, label: "1,000+ poss." },
+  { value: 2500, label: "2,500+ poss." },
 ];
 
 function fmt(value: number | null | undefined): string {
@@ -18,9 +28,11 @@ function fmt(value: number | null | undefined): string {
 
 export default function RapmPage() {
   const [sort, setSort] = useState<RapmSort>("rapm");
+  const [minPoss, setMinPoss] = useState(1000);
   const [page, setPage] = useState(1);
   const { data, isPending, isError } = useRapmLeaderboard({
     sort,
+    min_poss: minPoss,
     page,
     page_size: PAGE_SIZE,
   });
@@ -36,26 +48,49 @@ export default function RapmPage() {
         </p>
       </div>
 
-      <div className="flex gap-1" role="tablist" aria-label="Sort by metric">
-        {SORTS.map(({ key, label }) => (
-          <button
-            key={key}
-            role="tab"
-            aria-selected={sort === key}
-            onClick={() => {
-              setSort(key);
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex gap-1" role="tablist" aria-label="Sort by metric">
+          {SORTS.map(({ key, label }) => (
+            <button
+              key={key}
+              role="tab"
+              aria-selected={sort === key}
+              onClick={() => {
+                setSort(key);
+                setPage(1);
+              }}
+              className={`text-sm px-3 py-1 rounded-full transition-colors ${
+                sort === key
+                  ? "bg-zinc-200 text-zinc-900"
+                  : "text-zinc-400 hover:text-zinc-200"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        <label className="flex items-center gap-2 text-xs text-zinc-500">
+          Min. sample
+          <select
+            value={minPoss}
+            onChange={(e) => {
+              setMinPoss(Number(e.target.value));
               setPage(1);
             }}
-            className={`text-sm px-3 py-1 rounded-full transition-colors ${
-              sort === key
-                ? "bg-zinc-200 text-zinc-900"
-                : "text-zinc-400 hover:text-zinc-200"
-            }`}
+            className="bg-zinc-900 border border-zinc-800 rounded-md px-2 py-1 text-sm text-zinc-300"
           >
-            {label}
-          </button>
-        ))}
+            {MIN_POSS_CHOICES.map(({ value, label }) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </label>
       </div>
+      <p className="text-xs text-zinc-600">
+        Poss. is the sample behind a rating, not part of it — small samples stay noisy even
+        after regularization, so low-possession players are hidden by default.
+      </p>
 
       {isPending && (
         <div className="space-y-2">

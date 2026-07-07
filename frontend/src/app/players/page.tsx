@@ -9,6 +9,8 @@ const PAGE_SIZE = 25;
 export default function PlayersPage() {
   const [page, setPage] = useState(1);
   const { data, isPending, isError } = usePlayers({
+    // Hide historical-index players with no data in the loaded seasons.
+    with_stats: true,
     page,
     page_size: PAGE_SIZE,
   });

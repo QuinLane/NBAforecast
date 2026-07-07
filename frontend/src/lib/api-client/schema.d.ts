@@ -482,8 +482,14 @@ export interface components {
             team_id: number;
             /** Opponent Team Id */
             opponent_team_id: number;
+            /** Team Abbreviation */
+            team_abbreviation: string | null;
+            /** Opponent Abbreviation */
+            opponent_abbreviation: string | null;
             /** Is Home */
             is_home: boolean;
+            /** Won */
+            won: boolean | null;
             /** Min */
             min: number | null;
             /** Pts */
@@ -868,6 +874,7 @@ export interface operations {
         parameters: {
             query?: {
                 active?: boolean | null;
+                with_stats?: boolean;
                 page?: number;
                 page_size?: number;
             };
@@ -1034,6 +1041,7 @@ export interface operations {
                 window?: number;
                 as_of?: string | null;
                 sort?: string;
+                min_poss?: number;
                 page?: number;
                 page_size?: number;
             };

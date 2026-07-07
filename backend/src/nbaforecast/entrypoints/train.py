@@ -19,7 +19,9 @@ backfill has landed games (plus player stats for props heads, possessions for RA
 
 import argparse
 import asyncio
+import io
 import logging
+import sys
 from dataclasses import dataclass
 
 import numpy as np
@@ -294,6 +296,15 @@ async def _run(args: argparse.Namespace) -> None:
 
 def main() -> None:
     """Parse args and run training + promotion to completion."""
+    # Windows consoles/redirects default to cp1252; MLflow prints emoji to stdout at run
+    # end, which crashes the whole training process with UnicodeEncodeError (M3.5). Force
+    # UTF-8 rather than depending on the launcher's environment.
+    for stream in (sys.stdout, sys.stderr):
+        if isinstance(stream, io.TextIOWrapper) and (stream.encoding or "").lower() not in (
+            "utf-8",
+            "utf8",
+        ):
+            stream.reconfigure(encoding="utf-8")
     args = _parse_args()
     logging.basicConfig(level=get_settings().log_level)
     asyncio.run(_run(args))

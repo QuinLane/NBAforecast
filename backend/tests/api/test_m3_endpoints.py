@@ -282,7 +282,7 @@ def player_ids() -> list[int]:
 
 
 def test_rapm_leaderboard_sorted_desc(client: TestClient) -> None:
-    body = client.get("/api/v1/rapm").json()
+    body = client.get("/api/v1/rapm", params={"min_poss": 0}).json()
     assert body["total"] == 2
     rapms = [item["rapm"] for item in body["items"]]
     assert rapms == sorted(rapms, reverse=True)
@@ -290,8 +290,16 @@ def test_rapm_leaderboard_sorted_desc(client: TestClient) -> None:
     assert body["items"][0]["full_name"] is not None
 
 
+def test_rapm_leaderboard_default_min_poss_hides_small_samples(client: TestClient) -> None:
+    # Fixture players have 900/400 possessions — below the default 1000 floor.
+    body = client.get("/api/v1/rapm").json()
+    assert body["total"] == 0
+    body = client.get("/api/v1/rapm", params={"min_poss": 500}).json()
+    assert body["total"] == 1
+
+
 def test_rapm_leaderboard_sort_by_drapm(client: TestClient) -> None:
-    body = client.get("/api/v1/rapm", params={"sort": "drapm"}).json()
+    body = client.get("/api/v1/rapm", params={"sort": "drapm", "min_poss": 0}).json()
     drapms = [item["drapm"] for item in body["items"]]
     assert drapms == sorted(drapms, reverse=True)
 

@@ -1,12 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "../api-client/client";
 
-export type RapmSort = "rapm" | "orapm" | "drapm";
+export type RapmSort = "rapm" | "orapm" | "drapm" | "possessions";
 
 export type RapmParams = {
   window?: number;
   sort?: RapmSort;
   as_of?: string;
+  min_poss?: number;
   page?: number;
   page_size?: number;
 };

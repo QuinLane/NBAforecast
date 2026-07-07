@@ -15,7 +15,15 @@ from nbaforecast.api.schemas.rapm import RapmEntry, RapmHistoryEntry
 from nbaforecast.storage.models import Player, PlayerRapm
 
 DEFAULT_WINDOW = 3
-SORTABLE_COLUMNS = {"rapm": PlayerRapm.rapm, "orapm": PlayerRapm.orapm, "drapm": PlayerRapm.drapm}
+# A low-possession rating is mostly noise even after ridge shrinkage — the leaderboard
+# filters to a minimum sample by default (walkthrough finding, T3.15).
+DEFAULT_MIN_POSS = 1000
+SORTABLE_COLUMNS = {
+    "rapm": PlayerRapm.rapm,
+    "orapm": PlayerRapm.orapm,
+    "drapm": PlayerRapm.drapm,
+    "possessions": PlayerRapm.possessions,
+}
 
 
 def _as_float(value: object) -> float | None:
@@ -33,13 +41,15 @@ async def rapm_leaderboard(
     window: int = DEFAULT_WINDOW,
     as_of: date_type | None = None,
     sort: str = "rapm",
+    min_poss: int = DEFAULT_MIN_POSS,
     page: int = 1,
     page_size: int = 25,
 ) -> Page[RapmEntry]:
     """``GET /rapm`` — one snapshot's players ranked by the chosen metric (descending).
 
     ``as_of`` defaults to the latest snapshot date for ``window``; ``sort`` is one of
-    ``rapm``/``orapm``/``drapm``. Raises ``KeyError`` for an unknown ``sort`` (router → 400).
+    ``rapm``/``orapm``/``drapm``/``possessions``. ``min_poss`` drops small-sample ratings
+    (0 shows everyone). Raises ``KeyError`` for an unknown ``sort`` (router → 400).
     """
     if sort not in SORTABLE_COLUMNS:
         raise KeyError(sort)
@@ -53,6 +63,8 @@ async def rapm_leaderboard(
         .join(Player, Player.player_id == PlayerRapm.player_id, isouter=True)
         .where(PlayerRapm.window == window, PlayerRapm.as_of_date == effective_as_of)
     )
+    if min_poss > 0:
+        base = base.where(PlayerRapm.possessions >= min_poss)
     total = (await session.execute(select(func.count()).select_from(base.subquery()))).scalar_one()
 
     sort_column = SORTABLE_COLUMNS[sort]

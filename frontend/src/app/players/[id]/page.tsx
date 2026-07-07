@@ -2,6 +2,7 @@
 
 import { use } from "react";
 import Link from "next/link";
+import { PlayerHeadshot, TeamLogo } from "@/components/nba-images";
 import { usePlayer, usePlayerProps, usePlayerRapm } from "@/lib/hooks";
 
 const STAT_LABELS: Record<string, string> = {
@@ -94,31 +95,49 @@ export default function PlayerDetailPage({
       {playerQ.isPending ? (
         <div className="h-20 rounded-xl bg-zinc-800/50 animate-pulse" />
       ) : player ? (
-        <section className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-5 space-y-1">
-          <h1 className="text-2xl font-bold tracking-tight">
-            {player.full_name}
-          </h1>
-          <p className="text-sm text-zinc-500">
-            {[
-              player.position,
-              player.height_inches ? `${player.height_inches}"` : null,
-              player.weight_lbs ? `${player.weight_lbs} lb` : null,
-            ]
-              .filter(Boolean)
-              .join(" · ")}
-          </p>
-          {latestRapm && (
-            <p className="text-sm text-zinc-400 pt-1">
-              RAPM{" "}
-              <span className="font-mono font-semibold text-emerald-400">
-                {latestRapm.rapm?.toFixed(2) ?? "—"}
-              </span>{" "}
-              <span className="text-xs text-zinc-600">
-                (O {latestRapm.orapm?.toFixed(2) ?? "—"} / D{" "}
-                {latestRapm.drapm?.toFixed(2) ?? "—"})
-              </span>
-            </p>
-          )}
+        <section className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-5">
+          <div className="flex items-center gap-4">
+            <PlayerHeadshot
+              playerId={player.player_id}
+              name={player.full_name}
+              className="size-16"
+            />
+            <div className="space-y-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <h1 className="text-2xl font-bold tracking-tight truncate">
+                  {player.full_name}
+                </h1>
+                {player.recent_games[0] && (
+                  <TeamLogo
+                    teamId={player.recent_games[0].team_id}
+                    name={player.recent_games[0].team_abbreviation ?? "team"}
+                    className="size-7"
+                  />
+                )}
+              </div>
+              <p className="text-sm text-zinc-500">
+                {[
+                  player.position,
+                  player.height_inches ? `${player.height_inches}"` : null,
+                  player.weight_lbs ? `${player.weight_lbs} lb` : null,
+                ]
+                  .filter(Boolean)
+                  .join(" · ")}
+              </p>
+              {latestRapm && (
+                <p className="text-sm text-zinc-400 pt-1">
+                  RAPM{" "}
+                  <span className="font-mono font-semibold text-emerald-400">
+                    {latestRapm.rapm?.toFixed(2) ?? "—"}
+                  </span>{" "}
+                  <span className="text-xs text-zinc-600">
+                    (O {latestRapm.orapm?.toFixed(2) ?? "—"} / D{" "}
+                    {latestRapm.drapm?.toFixed(2) ?? "—"})
+                  </span>
+                </p>
+              )}
+            </div>
+          </div>
         </section>
       ) : null}
 

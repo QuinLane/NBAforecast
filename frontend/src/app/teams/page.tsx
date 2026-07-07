@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { TeamLogo } from "@/components/nba-images";
 import { useTeams } from "@/lib/hooks";
 
 export default function TeamsPage() {
@@ -30,6 +31,7 @@ export default function TeamsPage() {
                 href={`/teams/${team.team_id}`}
                 className="flex items-center gap-3 px-4 py-3 rounded-lg border border-zinc-800 bg-zinc-900/50 hover:bg-zinc-800/60 transition-colors"
               >
+                <TeamLogo teamId={team.team_id} name={team.full_name} />
                 <span className="font-mono text-xs text-zinc-500 w-10">
                   {team.abbreviation}
                 </span>

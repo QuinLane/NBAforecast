@@ -2,6 +2,7 @@
 
 import { use } from "react";
 import Link from "next/link";
+import { TeamLogo } from "@/components/nba-images";
 import { useTeam } from "@/lib/hooks";
 
 export default function TeamDetailPage({
@@ -36,17 +37,26 @@ export default function TeamDetailPage({
       {isPending ? (
         <div className="h-24 rounded-xl bg-zinc-800/50 animate-pulse" />
       ) : team ? (
-        <section className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-5 space-y-1">
-          <div className="flex items-baseline gap-3">
-            <span className="font-mono text-sm text-zinc-500">
-              {team.abbreviation}
-            </span>
-            <h1 className="text-2xl font-bold tracking-tight">{team.full_name}</h1>
+        <section className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-5">
+          <div className="flex items-center gap-4">
+            <TeamLogo
+              teamId={team.team_id}
+              name={team.full_name}
+              className="size-14"
+            />
+            <div className="space-y-1">
+              <div className="flex items-baseline gap-3">
+                <span className="font-mono text-sm text-zinc-500">
+                  {team.abbreviation}
+                </span>
+                <h1 className="text-2xl font-bold tracking-tight">{team.full_name}</h1>
+              </div>
+              <p className="text-sm text-zinc-500">
+                {[team.conference, team.division].filter(Boolean).join(" · ") ||
+                  "Conference/division not available"}
+              </p>
+            </div>
           </div>
-          <p className="text-sm text-zinc-500">
-            {[team.conference, team.division].filter(Boolean).join(" · ") ||
-              "Conference/division not available"}
-          </p>
         </section>
       ) : null}
     </main>

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { PlayerHeadshot } from "@/components/nba-images";
 import { usePlayers } from "@/lib/hooks";
 
 const PAGE_SIZE = 25;
@@ -40,7 +41,13 @@ export default function PlayersPage() {
                   href={`/players/${player.player_id}`}
                   className="flex items-center justify-between px-4 py-3 rounded-lg border border-zinc-800 bg-zinc-900/50 hover:bg-zinc-800/60 transition-colors"
                 >
-                  <span className="font-medium text-sm">{player.full_name}</span>
+                  <span className="flex items-center gap-3">
+                    <PlayerHeadshot
+                      playerId={player.player_id}
+                      name={player.full_name}
+                    />
+                    <span className="font-medium text-sm">{player.full_name}</span>
+                  </span>
                   <span className="text-xs text-zinc-500">{player.position ?? ""}</span>
                 </Link>
               </li>

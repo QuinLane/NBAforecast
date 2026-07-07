@@ -5,6 +5,8 @@ Profile/list/game-log/shot-chart reads are pure DB queries; the props projection
 ``features_player_game`` and the props champion heads.
 """
 
+from collections import OrderedDict
+
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -12,6 +14,9 @@ from nbaforecast.api.schemas.common import Page
 from nbaforecast.api.schemas.players import (
     PlayerDetail,
     PlayerGameLog,
+    PlayerGameStatLine,
+    PlayerSeasonAverages,
+    PlayerStatTrajectory,
     PlayerSummary,
     ShotChartEntry,
 )
@@ -108,6 +113,95 @@ async def get_player(session: AsyncSession, player_id: int) -> PlayerDetail | No
         birthdate=player.birthdate,
         recent_games=recent,
     )
+
+
+class _SeasonAcc:
+    """Running totals for one season, turned into per-game averages at the end."""
+
+    def __init__(self) -> None:
+        self.games = 0
+        self.min_sum = 0.0
+        self.min_games = 0  # games with a recorded minutes value
+        self.pts = self.reb = self.ast = self.fg3m = 0
+        self.fgm = self.fga = self.fg3a = self.ftm = self.fta = 0
+
+    def add(self, stat: PlayerGameStats) -> None:
+        self.games += 1
+        if stat.min is not None:
+            self.min_sum += float(stat.min)
+            self.min_games += 1
+        self.pts += stat.pts
+        self.reb += stat.reb
+        self.ast += stat.ast
+        self.fg3m += stat.fg3m
+        self.fgm += stat.fgm
+        self.fga += stat.fga
+        self.fg3a += stat.fg3a
+        self.ftm += stat.ftm
+        self.fta += stat.fta
+
+
+def _pct(makes: int, attempts: int) -> float | None:
+    return None if attempts == 0 else round(makes / attempts, 4)
+
+
+def _season_averages(season: str, acc: _SeasonAcc) -> PlayerSeasonAverages:
+    games = acc.games
+    return PlayerSeasonAverages(
+        season=season,
+        games_played=games,
+        min=None if acc.min_games == 0 else round(acc.min_sum / acc.min_games, 1),
+        pts=round(acc.pts / games, 1),
+        reb=round(acc.reb / games, 1),
+        ast=round(acc.ast / games, 1),
+        fg3m=round(acc.fg3m / games, 1),
+        fg_pct=_pct(acc.fgm, acc.fga),
+        fg3_pct=_pct(acc.fg3m, acc.fg3a),
+        ft_pct=_pct(acc.ftm, acc.fta),
+    )
+
+
+async def player_stat_trajectory(
+    session: AsyncSession, player_id: int
+) -> PlayerStatTrajectory | None:
+    """``GET /players/{player_id}/stats`` — chronological per-game lines + season averages.
+
+    Returns ``None`` for an unknown player (404). A known player with no ingested games yields
+    empty ``games``/``seasons`` (the profile page renders its own empty state). Seasons are
+    ordered chronologically (rows arrive by game date, so first-seen season order is correct).
+    """
+    player = await session.get(Player, player_id)
+    if player is None:
+        return None
+
+    query = (
+        select(PlayerGameStats, Game.game_date, Game.season)
+        .join(Game, Game.game_id == PlayerGameStats.game_id)
+        .where(PlayerGameStats.player_id == player_id)
+        .order_by(Game.game_date)
+    )
+    rows = (await session.execute(query)).all()
+
+    games = [
+        PlayerGameStatLine(
+            game_id=stat.game_id,
+            game_date=game_date,
+            season=season,
+            min=None if stat.min is None else float(stat.min),
+            pts=stat.pts,
+            reb=stat.reb,
+            ast=stat.ast,
+            fg3m=stat.fg3m,
+        )
+        for stat, game_date, season in rows
+    ]
+
+    accs: OrderedDict[str, _SeasonAcc] = OrderedDict()
+    for stat, _game_date, season in rows:
+        accs.setdefault(season, _SeasonAcc()).add(stat)
+    seasons = [_season_averages(season, acc) for season, acc in accs.items()]
+
+    return PlayerStatTrajectory(games=games, seasons=seasons)
 
 
 async def player_shots(

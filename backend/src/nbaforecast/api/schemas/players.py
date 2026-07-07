@@ -44,6 +44,47 @@ class PlayerDetail(PlayerSummary):
     recent_games: list[PlayerGameLog]
 
 
+class PlayerGameStatLine(BaseModel):
+    """One game's values for the stat-trajectory chart — chronological per-game series."""
+
+    game_id: str
+    game_date: date
+    season: str
+    min: float | None
+    pts: int
+    reb: int
+    ast: int
+    fg3m: int
+
+
+class PlayerSeasonAverages(BaseModel):
+    """A player's per-game averages for one season — the season/career table."""
+
+    season: str
+    games_played: int
+    min: float | None
+    pts: float
+    reb: float
+    ast: float
+    fg3m: float
+    # Shooting percentages from summed makes/attempts (None when no attempts).
+    fg_pct: float | None
+    fg3_pct: float | None
+    ft_pct: float | None
+
+
+class PlayerStatTrajectory(BaseModel):
+    """``GET /players/{player_id}/stats`` — the per-game series plus season averages.
+
+    ``games`` drives the trajectory chart (PTS/REB/AST/3PM/MIN tabs; RAPM comes from the
+    separate snapshot-cadence ``/rapm`` history). ``seasons`` drives the season/career table —
+    one row today, a career ladder once the full-era backfill lands.
+    """
+
+    games: list[PlayerGameStatLine]
+    seasons: list[PlayerSeasonAverages]
+
+
 class ShotChartEntry(BaseModel):
     """One field-goal attempt for the shot chart — ``GET /players/{player_id}/shots``.
 

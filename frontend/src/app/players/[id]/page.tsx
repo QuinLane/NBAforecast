@@ -3,7 +3,13 @@
 import { use } from "react";
 import Link from "next/link";
 import { PlayerHeadshot, TeamLogo } from "@/components/nba-images";
-import { usePlayer, usePlayerProps, usePlayerRapm } from "@/lib/hooks";
+import { PlayerTrajectory } from "@/components/player-trajectory";
+import {
+  usePlayer,
+  usePlayerProps,
+  usePlayerRapm,
+  usePlayerStats,
+} from "@/lib/hooks";
 
 const STAT_LABELS: Record<string, string> = {
   pts: "Points",
@@ -55,6 +61,60 @@ function PropsBoard({ playerId, gameId }: { playerId: number; gameId: string }) 
         );
       })}
     </div>
+  );
+}
+
+function pct(value: number | null | undefined): string {
+  return value == null ? "—" : `${(value * 100).toFixed(1)}%`;
+}
+
+function SeasonAveragesTable({ playerId }: { playerId: number }) {
+  const { data, isPending } = usePlayerStats(playerId);
+  const seasons = data?.seasons ?? [];
+
+  if (isPending) {
+    return <div className="h-20 rounded-lg bg-zinc-800/40 animate-pulse" />;
+  }
+  if (seasons.length === 0) return null;
+
+  return (
+    <section className="space-y-2">
+      <h2 className="text-sm font-semibold text-zinc-300">Season averages</h2>
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="text-left text-xs text-zinc-500 border-b border-zinc-800">
+            <th className="py-2 pr-2 font-medium">Season</th>
+            <th className="py-2 px-2 font-medium text-right">GP</th>
+            <th className="py-2 px-2 font-medium text-right">MIN</th>
+            <th className="py-2 px-2 font-medium text-right">PTS</th>
+            <th className="py-2 px-2 font-medium text-right">REB</th>
+            <th className="py-2 px-2 font-medium text-right">AST</th>
+            <th className="py-2 px-2 font-medium text-right">3PM</th>
+            <th className="py-2 px-2 font-medium text-right">FG%</th>
+            <th className="py-2 px-2 font-medium text-right">3P%</th>
+            <th className="py-2 pl-2 font-medium text-right">FT%</th>
+          </tr>
+        </thead>
+        <tbody className="font-mono tabular-nums">
+          {seasons.map((s) => (
+            <tr key={s.season} className="border-b border-zinc-900">
+              <td className="py-2 pr-2 font-sans text-zinc-300">{s.season}</td>
+              <td className="py-2 px-2 text-right text-zinc-400">{s.games_played}</td>
+              <td className="py-2 px-2 text-right text-zinc-400">
+                {s.min == null ? "—" : s.min.toFixed(1)}
+              </td>
+              <td className="py-2 px-2 text-right text-zinc-200">{s.pts.toFixed(1)}</td>
+              <td className="py-2 px-2 text-right">{s.reb.toFixed(1)}</td>
+              <td className="py-2 px-2 text-right">{s.ast.toFixed(1)}</td>
+              <td className="py-2 px-2 text-right">{s.fg3m.toFixed(1)}</td>
+              <td className="py-2 px-2 text-right text-zinc-400">{pct(s.fg_pct)}</td>
+              <td className="py-2 px-2 text-right text-zinc-400">{pct(s.fg3_pct)}</td>
+              <td className="py-2 pl-2 text-right text-zinc-400">{pct(s.ft_pct)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </section>
   );
 }
 
@@ -157,6 +217,14 @@ export default function PlayerDetailPage({
           </h2>
           <PropsBoard playerId={playerId} gameId={latestGame} />
         </section>
+      )}
+
+      {/* Stat trajectory + season averages (players with ingested games) */}
+      {player && player.recent_games.length > 0 && (
+        <>
+          <PlayerTrajectory playerId={playerId} />
+          <SeasonAveragesTable playerId={playerId} />
+        </>
       )}
 
       {/* Players from the historical index with no data in the loaded seasons */}

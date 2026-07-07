@@ -23,9 +23,11 @@ export {
   usePlayers,
   usePlayer,
   usePlayerProps,
+  usePlayerStats,
   playersQueryKey,
   playerQueryKey,
   playerPropsQueryKey,
+  playerStatsQueryKey,
   type PlayersParams,
 } from "./use-players";
 export {

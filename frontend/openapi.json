@@ -475,6 +475,48 @@
     }
    }
   },
+  "/api/v1/players/{player_id}/stats": {
+   "get": {
+    "tags": [
+     "players"
+    ],
+    "summary": "Get Player Stats",
+    "operationId": "get_player_stats_api_v1_players__player_id__stats_get",
+    "parameters": [
+     {
+      "name": "player_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer",
+       "title": "Player Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/PlayerStatTrajectory"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
   "/api/v1/players/{player_id}/shots": {
    "get": {
     "tags": [
@@ -1537,6 +1579,175 @@
     ],
     "title": "PlayerGameLog",
     "description": "One recent game line on a player's profile."
+   },
+   "PlayerGameStatLine": {
+    "properties": {
+     "game_id": {
+      "type": "string",
+      "title": "Game Id"
+     },
+     "game_date": {
+      "type": "string",
+      "format": "date",
+      "title": "Game Date"
+     },
+     "season": {
+      "type": "string",
+      "title": "Season"
+     },
+     "min": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Min"
+     },
+     "pts": {
+      "type": "integer",
+      "title": "Pts"
+     },
+     "reb": {
+      "type": "integer",
+      "title": "Reb"
+     },
+     "ast": {
+      "type": "integer",
+      "title": "Ast"
+     },
+     "fg3m": {
+      "type": "integer",
+      "title": "Fg3M"
+     }
+    },
+    "type": "object",
+    "required": [
+     "game_id",
+     "game_date",
+     "season",
+     "min",
+     "pts",
+     "reb",
+     "ast",
+     "fg3m"
+    ],
+    "title": "PlayerGameStatLine",
+    "description": "One game's values for the stat-trajectory chart \u2014 chronological per-game series."
+   },
+   "PlayerSeasonAverages": {
+    "properties": {
+     "season": {
+      "type": "string",
+      "title": "Season"
+     },
+     "games_played": {
+      "type": "integer",
+      "title": "Games Played"
+     },
+     "min": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Min"
+     },
+     "pts": {
+      "type": "number",
+      "title": "Pts"
+     },
+     "reb": {
+      "type": "number",
+      "title": "Reb"
+     },
+     "ast": {
+      "type": "number",
+      "title": "Ast"
+     },
+     "fg3m": {
+      "type": "number",
+      "title": "Fg3M"
+     },
+     "fg_pct": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Fg Pct"
+     },
+     "fg3_pct": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Fg3 Pct"
+     },
+     "ft_pct": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Ft Pct"
+     }
+    },
+    "type": "object",
+    "required": [
+     "season",
+     "games_played",
+     "min",
+     "pts",
+     "reb",
+     "ast",
+     "fg3m",
+     "fg_pct",
+     "fg3_pct",
+     "ft_pct"
+    ],
+    "title": "PlayerSeasonAverages",
+    "description": "A player's per-game averages for one season \u2014 the season/career table."
+   },
+   "PlayerStatTrajectory": {
+    "properties": {
+     "games": {
+      "items": {
+       "$ref": "#/components/schemas/PlayerGameStatLine"
+      },
+      "type": "array",
+      "title": "Games"
+     },
+     "seasons": {
+      "items": {
+       "$ref": "#/components/schemas/PlayerSeasonAverages"
+      },
+      "type": "array",
+      "title": "Seasons"
+     }
+    },
+    "type": "object",
+    "required": [
+     "games",
+     "seasons"
+    ],
+    "title": "PlayerStatTrajectory",
+    "description": "``GET /players/{player_id}/stats`` \u2014 the per-game series plus season averages.\n\n``games`` drives the trajectory chart (PTS/REB/AST/3PM/MIN tabs; RAPM comes from the\nseparate snapshot-cadence ``/rapm`` history). ``seasons`` drives the season/career table \u2014\none row today, a career ladder once the full-era backfill lands."
    },
    "PlayerSummary": {
     "properties": {

@@ -1,8 +1,10 @@
 export {
   useGame,
   useGames,
+  useGameBoxScore,
   gamesQueryKey,
   gameQueryKey,
+  gameBoxScoreQueryKey,
   type GamesParams,
 } from "./use-games";
 export {

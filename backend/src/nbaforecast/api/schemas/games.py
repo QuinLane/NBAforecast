@@ -35,6 +35,57 @@ class GameDetail(GameSummary):
     num_periods: int
 
 
+class BoxScorePlayerLine(BaseModel):
+    """One player's box-score line within a game box score."""
+
+    player_id: int
+    full_name: str | None
+    started: bool
+    min: float | None
+    pts: int
+    reb: int
+    ast: int
+    stl: int
+    blk: int
+    tov: int
+    fgm: int
+    fga: int
+    fg3m: int
+    fg3a: int
+    ftm: int
+    fta: int
+    plus_minus: int | None
+
+
+class BoxScoreTeam(BaseModel):
+    """One team's totals plus its player lines, ordered starters-then-minutes."""
+
+    team: TeamSummary
+    is_home: bool
+    pts: int
+    reb: int
+    ast: int
+    stl: int
+    blk: int
+    tov: int
+    fgm: int
+    fga: int
+    fg3m: int
+    fg3a: int
+    ftm: int
+    fta: int
+    players: list[BoxScorePlayerLine]
+
+
+class GameBoxScore(BaseModel):
+    """``GET /games/{game_id}/boxscore`` — both teams' totals and player lines for a played game."""
+
+    game_id: str
+    status: str
+    home: BoxScoreTeam
+    away: BoxScoreTeam
+
+
 class GamePrediction(BaseModel):
     """backend-api.md §4 ``GamePrediction``.
 

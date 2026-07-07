@@ -25,6 +25,20 @@ export default function GameDetailPage({
   const prediction = predQ.data;
   const explanation = wantFull && fullQ.data ? fullQ.data.explanation : prediction?.explanation;
 
+  // Headline the team the model actually favors, not always the home side.
+  const homeFavored = (prediction?.win_prob ?? 0.5) >= 0.5;
+  const favoredProb = prediction
+    ? homeFavored
+      ? prediction.win_prob
+      : 1 - prediction.win_prob
+    : null;
+  const favoredName =
+    (homeFavored ? game?.home_team.full_name : game?.away_team.full_name) ??
+    (homeFavored ? "the home team" : "the away team");
+  const otherName =
+    (homeFavored ? game?.away_team.full_name : game?.home_team.full_name) ??
+    (homeFavored ? "the away team" : "the home team");
+
   if (gameQ.isError) {
     return (
       <main className="p-8 text-center text-zinc-400">
@@ -85,15 +99,16 @@ export default function GameDetailPage({
       {/* Win probability headline */}
       {predQ.isPending ? (
         <div className="h-8 w-48 rounded bg-zinc-800/50 animate-pulse" />
-      ) : prediction ? (
+      ) : prediction && favoredProb != null ? (
         <section className="space-y-2">
           <div className="flex items-baseline gap-2">
             <span className="text-4xl font-bold text-emerald-400">
-              {(prediction.win_prob * 100).toFixed(1)}%
+              {(favoredProb * 100).toFixed(1)}%
             </span>
             <span className="text-zinc-500 text-sm">
-              chance {game?.home_team.abbreviation ?? "the home team"} beats{" "}
-              {game?.away_team.abbreviation ?? "the away team"}
+              chance the {homeFavored ? "home" : "away"} team{" "}
+              <span className="text-zinc-300 font-medium">{favoredName}</span>{" "}
+              beats {otherName}
             </span>
           </div>
           {(prediction.margin != null || prediction.total != null) && (
@@ -121,11 +136,10 @@ export default function GameDetailPage({
           )}
           <p className="text-xs text-zinc-600 max-w-prose">
             How to read this: if this matchup were played many times from exactly these
-            pre-game conditions, the model expects{" "}
-            {game?.home_team.abbreviation ?? "the home team"} to win about{" "}
-            {Math.round(prediction.win_prob * 100)} of every 100 — built only from
-            information available before tip-off. The breakdown below shows which factors
-            moved it away from a 50/50 baseline.
+            pre-game conditions, the model expects {favoredName} to win about{" "}
+            {Math.round(favoredProb * 100)} of every 100 — built only from information
+            available before tip-off. The breakdown below shows which factors moved it
+            away from a 50/50 baseline.
           </p>
         </section>
       ) : predQ.isError ? (

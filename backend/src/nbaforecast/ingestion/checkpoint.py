@@ -17,6 +17,22 @@ logger = logging.getLogger(__name__)
 # The per-game entities a full ingest must land.
 REQUIRED_ENTITIES: frozenset[str] = frozenset({"boxscore", "pbp", "shots", "possessions"})
 
+# Possessions (the RAPM substrate) only exist on cdn.nba.com from the 2019-20 season onward.
+# Earlier games are considered complete without them, so the era backfill doesn't perpetually
+# retry an entity that can never be fetched (and doesn't roll the whole game back over it).
+POSSESSIONS_MIN_SEASON_YEAR = 2019
+_PRE_POSSESSION_ENTITIES: frozenset[str] = frozenset({"boxscore", "pbp", "shots"})
+
+
+def required_entities(season_start_year: int) -> frozenset[str]:
+    """Entities a full ingest must land for a game in ``season_start_year``.
+
+    Pre-2019 seasons omit possessions (unavailable on the CDN); 2019-20 onward require all four.
+    """
+    if season_start_year < POSSESSIONS_MIN_SEASON_YEAR:
+        return _PRE_POSSESSION_ENTITIES
+    return REQUIRED_ENTITIES
+
 
 async def get_checkpoint(session: AsyncSession, game_id: str) -> set[str]:
     """Return the set of entities already ingested for ``game_id`` (empty if none)."""

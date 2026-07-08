@@ -5,13 +5,19 @@ shared concurrency tag (``stats-nba``). Games already fully ingested are skipped
 ``ingested_games`` checkpoint, so a crashed backfill resumes instead of restarting.
 """
 
+import asyncio
 import logging
 from datetime import date
 
 from prefect import flow, task
 
+from nbaforecast.config.settings import get_settings
 from nbaforecast.features.flows import refresh_team_game_features
-from nbaforecast.ingestion.checkpoint import list_complete_games, upsert_checkpoint
+from nbaforecast.ingestion.checkpoint import (
+    list_complete_games,
+    required_entities,
+    upsert_checkpoint,
+)
 from nbaforecast.ingestion.pipeline import (
     GameMeta,
     ingest_game,
@@ -43,29 +49,60 @@ async def ingest_game_task(meta: GameMeta) -> None:
         await session.commit()
 
 
-async def _run_games(metas: list[GameMeta]) -> list[GameMeta]:
+async def _run_games(metas: list[GameMeta], *, label: str = "") -> list[GameMeta]:
     """Ingest the games not already complete; returns the ones that actually succeeded.
 
-    A game that still fails after the task's retries is logged and skipped rather than
-    failing the whole season (seen live at M3.5: one malformed boxscore payload killed a
-    1,225-game backfill). Failed games stay un-checkpointed, so the next run retries them.
+    Games run up to ``ingest_concurrency`` at a time (the shared request throttle still bounds
+    the upstream call rate). A game that still fails after the task's retries is logged and
+    skipped rather than failing the whole season (seen live at M3.5: one malformed boxscore
+    payload killed a 1,225-game backfill). Failed games stay un-checkpointed, so the next run
+    retries them. Progress is logged so a detached run is watchable via the log file.
     """
+    # Every meta in a call is from one season, so one era-appropriate required set applies.
+    required = required_entities(metas[0].season_start_year) if metas else None
     async with get_sessionmaker()() as session:
-        complete = await list_complete_games(session, [m.game_id for m in metas])
+        complete = (
+            await list_complete_games(session, [m.game_id for m in metas], required=required)
+            if required is not None
+            else set()
+        )
     pending = [m for m in metas if m.game_id not in complete]
-    logger.info("%d games pending of %d", len(pending), len(metas))
+    total_pending = len(pending)
+    logger.info("[backfill] %s: %d pending of %d games", label, total_pending, len(metas))
+
+    concurrency = max(1, get_settings().ingest_concurrency)
+    semaphore = asyncio.Semaphore(concurrency)
+    progress_lock = asyncio.Lock()
     failed: list[str] = []
-    for meta in pending:
-        try:
-            await ingest_game_task(meta)
-        except Exception:
-            logger.exception(
-                "game %s failed after retries; continuing (next run will retry it)",
-                meta.game_id,
-            )
-            failed.append(meta.game_id)
+    done = 0
+
+    async def _ingest_one(meta: GameMeta) -> None:
+        nonlocal done
+        async with semaphore:
+            try:
+                await ingest_game_task(meta)
+            except Exception:
+                logger.exception(
+                    "game %s failed after retries; continuing (next run will retry it)",
+                    meta.game_id,
+                )
+                async with progress_lock:
+                    failed.append(meta.game_id)
+                return
+        async with progress_lock:
+            done += 1
+            if done % 10 == 0 or done == total_pending:
+                logger.info(
+                    "[backfill] %s: %d/%d done, %d remaining",
+                    label,
+                    done,
+                    total_pending,
+                    total_pending - done,
+                )
+
+    await asyncio.gather(*(_ingest_one(meta) for meta in pending))
     if failed:
-        logger.warning("%d game(s) failed this run: %s", len(failed), failed)
+        logger.warning("[backfill] %s: %d game(s) failed this run: %s", label, len(failed), failed)
     return [m for m in pending if m.game_id not in set(failed)]
 
 
@@ -78,7 +115,7 @@ async def backfill_season(season: str, season_type: str = "Regular Season") -> i
         await seed_reference_tables(session)
         metas = await ingest_schedule(session, store, season, season_type)
         await session.commit()
-    return len(await _run_games(metas))
+    return len(await _run_games(metas, label=f"{season} {season_type}"))
 
 
 @flow(name="ingest-daily")
@@ -120,10 +157,20 @@ async def backfill_era(
     """
     end_year = end_year if end_year is not None else _current_season_start_year()
     total = 0
-    for year in range(start_year, end_year + 1):
-        season = f"{year}-{(year + 1) % 100:02d}"
-        for season_type in season_types:
-            logger.info("backfilling %s (%s)", season, season_type)
-            total += await backfill_season(season, season_type)
-    logger.info("era backfill processed %d games", total)
+    steps = [
+        (f"{year}-{(year + 1) % 100:02d}", season_type)
+        for year in range(start_year, end_year + 1)
+        for season_type in season_types
+    ]
+    for i, (season, season_type) in enumerate(steps, start=1):
+        logger.info(
+            "[backfill] === season %d/%d: %s %s (era total so far: %d games) ===",
+            i,
+            len(steps),
+            season,
+            season_type,
+            total,
+        )
+        total += await backfill_season(season, season_type)
+    logger.info("[backfill] era complete: %d games processed across %d seasons", total, len(steps))
     return total

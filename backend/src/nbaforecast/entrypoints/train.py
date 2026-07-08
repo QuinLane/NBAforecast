@@ -28,6 +28,7 @@ import numpy as np
 import pandas as pd
 
 from nbaforecast.config.settings import get_settings
+from nbaforecast.features.game_state import build_game_state_features, in_game_win_labels
 from nbaforecast.features.player_game import build_player_game_features
 from nbaforecast.features.team_game import build_team_game_features
 from nbaforecast.models.heads import HEAD_REGISTRY, PROPS_STATS
@@ -42,6 +43,7 @@ from nbaforecast.models.rapm.snapshots import (
 from nbaforecast.storage.database import get_sessionmaker
 from nbaforecast.storage.models import (
     Game,
+    PlayByPlay,
     Player,
     PlayerGameStats,
     Possession,
@@ -74,6 +76,9 @@ PROMOTION_GATES: dict[str, PromotionGate] = {
     "game_win": PromotionGate("backtest_log_loss", calibration_metric_key="backtest_brier_score"),
     "game_margin": PromotionGate("backtest_mae"),
     "game_total": PromotionGate("backtest_mae"),
+    "in_game_win": PromotionGate(
+        "backtest_log_loss", calibration_metric_key="backtest_brier_score"
+    ),
     **{f"props_{stat}": PromotionGate("backtest_mae") for stat in PROPS_STATS},
 }
 
@@ -129,7 +134,8 @@ def train_and_promote(
     """Backtest, final-fit, log, and gate one head. Returns the MLflow run id."""
     head = HEAD_REGISTRY[head_name]
     gate = PROMOTION_GATES[head_name]
-    metric_fn = classification_metrics if head_name == "game_win" else regression_metrics
+    classifier_heads = ("game_win", "in_game_win")
+    metric_fn = classification_metrics if head_name in classifier_heads else regression_metrics
 
     labeled = labels.notna()
     features, labels = features.loc[labeled], labels.loc[labeled]
@@ -197,6 +203,27 @@ async def train_game_heads(head_names: list[str], *, lookback_seasons: int) -> N
     labels = game_labels(features, outcomes)
     for head_name in head_names:
         train_and_promote(head_name, features, labels[head_name], lookback_seasons=lookback_seasons)
+
+
+async def train_in_game_head(*, lookback_seasons: int) -> None:
+    """Train/gate the in-game win-probability head off play-by-play game state.
+
+    Scoped to the most recent season present: it's the one guaranteed fully ingested, gives a fast
+    single-season fit for the first champion, and game dynamics (margin-by-time to win) are
+    era-stable. Once the full-era backfill lands, drop the filter to backtest across all seasons.
+    """
+    async with get_sessionmaker()() as session:
+        games = await load_table_as_dataframe(session, Game)
+        play_by_play = await load_table_as_dataframe(session, PlayByPlay)
+
+    latest_season = int(games["season_start_year"].max())
+    games = games[games["season_start_year"] == latest_season]
+    features = build_game_state_features(games, play_by_play)
+    labels = in_game_win_labels(features, games)
+    logger.info(
+        "in_game_win: training on %d events from the %d season", len(features), latest_season
+    )
+    train_and_promote("in_game_win", features, labels, lookback_seasons=lookback_seasons)
 
 
 async def train_props_heads(head_names: list[str], *, lookback_seasons: int) -> None:
@@ -292,6 +319,8 @@ async def _run(args: argparse.Namespace) -> None:
         await train_game_heads(game_heads, lookback_seasons=args.lookback_seasons)
     if props_heads:
         await train_props_heads(props_heads, lookback_seasons=args.lookback_seasons)
+    if "in_game_win" in args.heads:
+        await train_in_game_head(lookback_seasons=args.lookback_seasons)
 
 
 def main() -> None:

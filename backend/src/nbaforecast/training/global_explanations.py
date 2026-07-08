@@ -32,6 +32,8 @@ from nbaforecast.models.game_prediction.win_prob import LightGBMWinProbHead
 from nbaforecast.models.game_prediction.win_prob import design_matrix as game_design_matrix
 from nbaforecast.models.props.regressor import PropsRegressorHead
 from nbaforecast.models.props.regressor import design_matrix as props_design_matrix
+from nbaforecast.models.win_probability.in_game import LightGBMInGameWinProbHead
+from nbaforecast.models.win_probability.in_game import design_matrix as in_game_design_matrix
 from nbaforecast.training.registry import configure_tracking
 
 logger = logging.getLogger(__name__)
@@ -40,6 +42,9 @@ GLOBAL_EXPLANATION_ARTIFACT_DIR = "explanations"
 GLOBAL_EXPLANATION_FILENAME = "global_explanation.json"
 TOP_DEPENDENCE_FEATURES = 6
 MAX_DEPENDENCE_POINTS = 300
+# TreeSHAP is O(rows); the in-game head trains on hundreds of thousands of per-event rows, so cap
+# how many the global-importance pass explains. A few thousand rows estimate mean|SHAP| fine.
+MAX_SHAP_ROWS = 5000
 
 
 @dataclass(slots=True, frozen=True)
@@ -66,6 +71,8 @@ def _design_for_head(head: ModelHead[Any], features: pd.DataFrame) -> pd.DataFra
     """The exact design matrix ``head`` trains/predicts on — so importance aligns with the model."""
     if isinstance(head, PropsRegressorHead):
         return props_design_matrix(features)
+    if isinstance(head, LightGBMInGameWinProbHead):
+        return in_game_design_matrix(features)
     if isinstance(head, LightGBMWinProbHead | LightGBMMarginHead | LightGBMTotalHead):
         return game_design_matrix(features)
     raise TypeError(f"no global-explanation design matrix for head type {type(head).__name__}")
@@ -114,6 +121,11 @@ def compute_global_explanation(
     """
     if features.empty:
         raise ValueError("cannot compute a global explanation over zero rows")
+
+    # Cap the TreeSHAP pass: mean|SHAP| over a random sample estimates global importance fine and
+    # keeps hundreds-of-thousands-of-rows heads (in-game win prob) from taking minutes here.
+    if len(features) > MAX_SHAP_ROWS:
+        features = features.sample(n=MAX_SHAP_ROWS, random_state=42)
 
     design = _design_for_head(head, features)
     explainer = model.get("explainer") if isinstance(model, dict) else None

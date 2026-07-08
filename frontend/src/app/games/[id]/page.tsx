@@ -5,6 +5,7 @@ import Link from "next/link";
 import { GameBoxScore } from "@/components/game-boxscore";
 import { TeamLogo } from "@/components/nba-images";
 import { PredictionExplainer } from "@/components/prediction-explainer";
+import { WinProbabilityTimeline } from "@/components/win-probability-timeline";
 import {
   useGame,
   useGamePrediction,
@@ -168,6 +169,9 @@ export default function GameDetailPage({
       ) : predQ.isPending ? (
         <div className="h-64 rounded-xl bg-zinc-800/50 animate-pulse" />
       ) : null}
+
+      {/* In-game win-probability timeline (played games only) */}
+      <WinProbabilityTimeline gameId={id} enabled={game?.status === "final"} />
 
       {/* Box score (played games only) */}
       <GameBoxScore gameId={id} enabled={game?.status === "final"} />

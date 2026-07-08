@@ -2,9 +2,11 @@ export {
   useGame,
   useGames,
   useGameBoxScore,
+  useGameWinProbability,
   gamesQueryKey,
   gameQueryKey,
   gameBoxScoreQueryKey,
+  gameWinProbabilityQueryKey,
   type GamesParams,
 } from "./use-games";
 export {

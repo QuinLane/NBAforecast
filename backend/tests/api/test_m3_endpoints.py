@@ -325,6 +325,16 @@ def test_list_players_paginated(client: TestClient) -> None:
     assert len(body["items"]) == 3
 
 
+def test_list_players_search_filters_by_name(client: TestClient) -> None:
+    first = client.get("/api/v1/players", params={"page_size": 1}).json()["items"][0]
+    fragment = first["full_name"].split()[0]
+    body = client.get("/api/v1/players", params={"search": fragment}).json()
+    assert body["total"] >= 1
+    assert all(fragment.lower() in p["full_name"].lower() for p in body["items"])
+    empty = client.get("/api/v1/players", params={"search": "zzzznotaplayer"}).json()
+    assert empty["total"] == 0
+
+
 def test_get_player_detail_has_recent_games(client: TestClient, player_ids: list[int]) -> None:
     body = client.get(f"/api/v1/players/{player_ids[0]}").json()
     assert body["player_id"] == player_ids[0]

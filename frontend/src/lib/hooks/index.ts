@@ -26,6 +26,7 @@ export {
   usePlayer,
   usePlayerProps,
   usePlayerStats,
+  usePlayerSearch,
   playersQueryKey,
   playerQueryKey,
   playerPropsQueryKey,
@@ -43,3 +44,9 @@ export {
   headToHeadQueryKey,
   type TeamsParams,
 } from "./use-teams";
+export {
+  useStatsLeaderboard,
+  statsLeaderboardQueryKey,
+  type LeaderboardStat,
+  type LeaderboardParams,
+} from "./use-stats";

@@ -39,6 +39,7 @@ async def list_players(
     *,
     active: bool | None = None,
     with_stats: bool = False,
+    search: str | None = None,
     page: int = 1,
     page_size: int = 25,
 ) -> Page[PlayerSummary]:
@@ -46,7 +47,8 @@ async def list_players(
 
     ``with_stats`` keeps only players with at least one ingested game line — the reference
     table carries the full historical index (~5k players), most of whom have no data in the
-    loaded seasons (walkthrough finding, T3.15).
+    loaded seasons (walkthrough finding, T3.15). ``search`` is a case-insensitive name substring
+    (powers the header quick-search).
     """
     query = select(Player)
     if active is not None:
@@ -57,6 +59,8 @@ async def list_players(
             .where(PlayerGameStats.player_id == Player.player_id)
             .exists()
         )
+    if search:
+        query = query.where(Player.full_name.ilike(f"%{search}%"))
     total = (await session.execute(select(func.count()).select_from(query.subquery()))).scalar_one()
     paged = query.order_by(Player.full_name).offset((page - 1) * page_size).limit(page_size)
     players = (await session.execute(paged)).scalars().all()

@@ -14,6 +14,7 @@ from nbaforecast.api.schemas.games import (
     GameDetail,
     GamePrediction,
     GameSummary,
+    GameWinProbabilityTimeline,
 )
 
 router = APIRouter(prefix="/games", tags=["games"])
@@ -65,6 +66,24 @@ async def _predict_or_404(
     if prediction is None:
         raise HTTPException(status_code=404, detail=f"no prediction available for game {game_id!r}")
     return prediction
+
+
+@router.get("/{game_id}/win-probability", response_model=GameWinProbabilityTimeline)
+async def get_game_win_probability(
+    game_id: str,
+    session: AsyncSession = Depends(get_db_session),
+    model_provider: ModelProvider = Depends(get_model_provider),
+) -> GameWinProbabilityTimeline:
+    try:
+        timeline = await services.games.game_win_probability(session, model_provider, game_id)
+    except RuntimeError as exc:
+        # No in-game champion loaded yet (transient MLflow/startup) — mirror the prediction 503.
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    if timeline is None:
+        raise HTTPException(
+            status_code=404, detail=f"no win-probability timeline for game {game_id!r}"
+        )
+    return timeline
 
 
 @router.get("/{game_id}/prediction", response_model=GamePrediction)

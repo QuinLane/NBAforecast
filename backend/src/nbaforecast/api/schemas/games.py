@@ -86,6 +86,42 @@ class GameBoxScore(BaseModel):
     away: BoxScoreTeam
 
 
+class WinProbabilityDriver(BaseModel):
+    """One factor moving the in-game win probability at a moment (thinking panel)."""
+
+    label: str  # humanized, e.g. "Score margin"
+    value: str  # formatted current value, e.g. "+6" or "Q4 · 9:28"
+    contribution: float  # probability points this factor adds/removes at this moment
+    direction: str  # "up" | "down"
+
+
+class WinProbabilityPoint(BaseModel):
+    """One moment on the in-game win-probability timeline (one play-by-play event)."""
+
+    event_num: int
+    period: int
+    clock: str  # game clock in the period, "MM:SS"
+    seconds_remaining: int  # total seconds left in the game — the timeline x-axis
+    home_score: int
+    away_score: int
+    home_win_prob: float
+    description: str | None
+    drivers: list[WinProbabilityDriver]
+
+
+class GameWinProbabilityTimeline(BaseModel):
+    """``GET /games/{game_id}/win-probability`` — the in-game win-prob trajectory for a game.
+
+    Replays the stored play-by-play through the in-game win-prob champion: one point per usable
+    event, each with the home win probability and the SHAP drivers behind it at that moment.
+    """
+
+    game_id: str
+    home_team: TeamSummary
+    away_team: TeamSummary
+    points: list[WinProbabilityPoint]
+
+
 class GamePrediction(BaseModel):
     """backend-api.md §4 ``GamePrediction``.
 

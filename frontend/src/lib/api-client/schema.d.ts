@@ -72,6 +72,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/games/{game_id}/win-probability": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Game Win Probability */
+        get: operations["get_game_win_probability_api_v1_games__game_id__win_probability_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/games/{game_id}/prediction": {
         parameters: {
             query?: never;
@@ -523,6 +540,21 @@ export interface components {
             /** Status */
             status: string;
         };
+        /**
+         * GameWinProbabilityTimeline
+         * @description ``GET /games/{game_id}/win-probability`` — the in-game win-prob trajectory for a game.
+         *
+         *     Replays the stored play-by-play through the in-game win-prob champion: one point per usable
+         *     event, each with the home win probability and the SHAP drivers behind it at that moment.
+         */
+        GameWinProbabilityTimeline: {
+            /** Game Id */
+            game_id: string;
+            home_team: components["schemas"]["nbaforecast__api__schemas__games__TeamSummary"];
+            away_team: components["schemas"]["nbaforecast__api__schemas__games__TeamSummary"];
+            /** Points */
+            points: components["schemas"]["WinProbabilityPoint"][];
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -870,6 +902,44 @@ export interface components {
             ctx?: Record<string, never>;
         };
         /**
+         * WinProbabilityDriver
+         * @description One factor moving the in-game win probability at a moment (thinking panel).
+         */
+        WinProbabilityDriver: {
+            /** Label */
+            label: string;
+            /** Value */
+            value: string;
+            /** Contribution */
+            contribution: number;
+            /** Direction */
+            direction: string;
+        };
+        /**
+         * WinProbabilityPoint
+         * @description One moment on the in-game win-probability timeline (one play-by-play event).
+         */
+        WinProbabilityPoint: {
+            /** Event Num */
+            event_num: number;
+            /** Period */
+            period: number;
+            /** Clock */
+            clock: string;
+            /** Seconds Remaining */
+            seconds_remaining: number;
+            /** Home Score */
+            home_score: number;
+            /** Away Score */
+            away_score: number;
+            /** Home Win Prob */
+            home_win_prob: number;
+            /** Description */
+            description: string | null;
+            /** Drivers */
+            drivers: components["schemas"]["WinProbabilityDriver"][];
+        };
+        /**
          * TeamSummary
          * @description The minimal team identity embedded in a game response.
          */
@@ -1012,6 +1082,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["GameBoxScore"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_game_win_probability_api_v1_games__game_id__win_probability_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                game_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GameWinProbabilityTimeline"];
                 };
             };
             /** @description Validation Error */

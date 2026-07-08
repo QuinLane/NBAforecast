@@ -9,6 +9,9 @@ features/team_game.py's module docstring is the reason this works without a sepa
 
 from datetime import date as date_type
 
+import numpy as np
+import pandas as pd
+import shap
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -21,18 +24,31 @@ from nbaforecast.api.schemas.games import (
     GameDetail,
     GamePrediction,
     GameSummary,
+    GameWinProbabilityTimeline,
     TeamSummary,
+    WinProbabilityDriver,
+    WinProbabilityPoint,
 )
 from nbaforecast.explain.humanizer import humanize
+from nbaforecast.features.game_state import build_game_state_features
 from nbaforecast.features.team_game import build_team_game_features
+from nbaforecast.models.win_probability.in_game import design_matrix as in_game_design_matrix
 from nbaforecast.storage.models import (
     Game,
+    PlayByPlay,
     Player,
     PlayerGameStats,
     Team,
     TeamGameStats,
 )
 from nbaforecast.storage.repositories import load_table_as_dataframe
+
+IN_GAME_WIN_HEAD = "in_game_win"
+_WIN_PROB_FEATURE_LABELS = {
+    "score_margin": "Score margin",
+    "seconds_remaining": "Time remaining",
+    "period": "Period",
+}
 
 TOP_N_DRIVERS = 5
 GAME_WIN_HEAD = "game_win"
@@ -271,4 +287,145 @@ async def get_game_prediction(
 
     return GamePrediction(
         game_id=game_id, win_prob=win_prob, explanation=explanation, **regressor_values
+    )
+
+
+def _clock(seconds_in_period: float | None) -> str:
+    """Game clock 'M:SS' from seconds left in the period (blank when unknown)."""
+    if seconds_in_period is None or pd.isna(seconds_in_period):
+        return ""
+    total = int(seconds_in_period)
+    return f"{total // 60}:{total % 60:02d}"
+
+
+def _format_feature(column: str, value: float) -> str:
+    if column == "score_margin":
+        return f"{int(value):+d}"
+    if column == "period":
+        period = int(value)
+        return f"OT{period - 4}" if period > 4 else f"Q{period}"
+    total = int(value)  # seconds_remaining
+    return f"{total // 60}:{total % 60:02d} left"
+
+
+def _win_prob_drivers(
+    shap_row: np.ndarray, columns: list[str], feature_row: pd.Series, baseline_log_odds: float
+) -> list[WinProbabilityDriver]:
+    """Per-moment drivers in probability points, via the same telescoping logistic mapping the
+    game-page explainer uses (so ``sum(contributions)`` matches ``prediction - baseline``)."""
+    order = np.argsort(-np.abs(shap_row))
+    running = baseline_log_odds
+    drivers: list[WinProbabilityDriver] = []
+    for i in order:
+        prev = 1.0 / (1.0 + np.exp(-running))
+        running += float(shap_row[i])
+        new = 1.0 / (1.0 + np.exp(-running))
+        drivers.append(
+            WinProbabilityDriver(
+                label=_WIN_PROB_FEATURE_LABELS[columns[i]],
+                value=_format_feature(columns[i], float(feature_row[columns[i]])),
+                contribution=float(new - prev),
+                direction="up" if new >= prev else "down",
+            )
+        )
+    return drivers
+
+
+async def game_win_probability(
+    session: AsyncSession, model_provider: ModelProvider, game_id: str
+) -> GameWinProbabilityTimeline | None:
+    """``GET /games/{game_id}/win-probability`` — replay a game's play-by-play through the in-game
+    win-prob champion into a per-moment trajectory with SHAP drivers.
+
+    ``None`` if the game is unknown or has no usable play-by-play (not played yet → 404). Raises
+    ``RuntimeError`` (→ 503) if no ``in_game_win`` champion is loaded, like the prediction path.
+    """
+    game = await session.get(Game, game_id)
+    if game is None:
+        return None
+
+    rows = (
+        (
+            await session.execute(
+                select(PlayByPlay)
+                .where(PlayByPlay.game_id == game_id)
+                .order_by(PlayByPlay.event_num)
+            )
+        )
+        .scalars()
+        .all()
+    )
+    if not rows:
+        return None
+
+    pbp = pd.DataFrame(
+        [
+            {
+                "game_id": r.game_id,
+                "event_num": r.event_num,
+                "period": r.period,
+                "seconds_remaining_period": r.seconds_remaining_period,
+                "home_score": r.home_score,
+                "away_score": r.away_score,
+                "description": r.description,
+            }
+            for r in rows
+        ]
+    )
+    games_df = pd.DataFrame(
+        [
+            {
+                "game_id": game.game_id,
+                "game_date": game.game_date,
+                "season_start_year": game.season_start_year,
+            }
+        ]
+    )
+    features = (
+        build_game_state_features(games_df, pbp).sort_values("event_num").reset_index(drop=True)
+    )
+    if features.empty:
+        return None
+
+    loaded = model_provider.get(IN_GAME_WIN_HEAD)  # RuntimeError → 503 at the router
+    probs = loaded.predict(features).to_numpy()
+
+    design = in_game_design_matrix(features)
+    model = loaded.model
+    explainer = model.get("explainer") or shap.TreeExplainer(model["booster"])
+    raw_shap = explainer.shap_values(design)
+    shap_matrix = np.asarray(raw_shap[1] if isinstance(raw_shap, list) else raw_shap)
+    baseline = float(np.asarray(explainer.expected_value).reshape(-1)[-1])
+
+    columns = list(design.columns)
+    display = pbp.set_index("event_num")
+    points: list[WinProbabilityPoint] = []
+    for i in range(len(features)):
+        row = features.iloc[i]
+        event_num = int(row["event_num"])
+        period = int(row["period"])
+        seconds_remaining = int(row["seconds_remaining"])
+        # Clock within the period: strip the not-yet-played regulation periods back off.
+        in_period = seconds_remaining - (4 - period) * 60 * 12 if period <= 4 else seconds_remaining
+        description = display.loc[event_num, "description"]
+        points.append(
+            WinProbabilityPoint(
+                event_num=event_num,
+                period=period,
+                clock=_clock(in_period),
+                seconds_remaining=seconds_remaining,
+                home_score=int(row["home_score"]),
+                away_score=int(row["away_score"]),
+                home_win_prob=float(probs[i]),
+                description=None if pd.isna(description) else str(description),
+                drivers=_win_prob_drivers(shap_matrix[i], columns, row, baseline),
+            )
+        )
+
+    teams = await _team_lookup(session)
+    return GameWinProbabilityTimeline(
+        game_id=game_id,
+        home_team=teams[game.home_team_id],
+        away_team=teams[game.away_team_id],
+        points=points,
     )

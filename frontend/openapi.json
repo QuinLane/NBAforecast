@@ -217,6 +217,48 @@
     }
    }
   },
+  "/api/v1/games/{game_id}/win-probability": {
+   "get": {
+    "tags": [
+     "games"
+    ],
+    "summary": "Get Game Win Probability",
+    "operationId": "get_game_win_probability_api_v1_games__game_id__win_probability_get",
+    "parameters": [
+     {
+      "name": "game_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "title": "Game Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/GameWinProbabilityTimeline"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
   "/api/v1/games/{game_id}/prediction": {
    "get": {
     "tags": [
@@ -1566,6 +1608,36 @@
     "title": "GameSummary",
     "description": "One row of a games list \u2014 backend-api.md \u00a73 ``GET /games``."
    },
+   "GameWinProbabilityTimeline": {
+    "properties": {
+     "game_id": {
+      "type": "string",
+      "title": "Game Id"
+     },
+     "home_team": {
+      "$ref": "#/components/schemas/nbaforecast__api__schemas__games__TeamSummary"
+     },
+     "away_team": {
+      "$ref": "#/components/schemas/nbaforecast__api__schemas__games__TeamSummary"
+     },
+     "points": {
+      "items": {
+       "$ref": "#/components/schemas/WinProbabilityPoint"
+      },
+      "type": "array",
+      "title": "Points"
+     }
+    },
+    "type": "object",
+    "required": [
+     "game_id",
+     "home_team",
+     "away_team",
+     "points"
+    ],
+    "title": "GameWinProbabilityTimeline",
+    "description": "``GET /games/{game_id}/win-probability`` \u2014 the in-game win-prob trajectory for a game.\n\nReplays the stored play-by-play through the in-game win-prob champion: one point per usable\nevent, each with the home win probability and the SHAP drivers behind it at that moment."
+   },
    "HTTPValidationError": {
     "properties": {
      "detail": {
@@ -2562,6 +2634,99 @@
      "type"
     ],
     "title": "ValidationError"
+   },
+   "WinProbabilityDriver": {
+    "properties": {
+     "label": {
+      "type": "string",
+      "title": "Label"
+     },
+     "value": {
+      "type": "string",
+      "title": "Value"
+     },
+     "contribution": {
+      "type": "number",
+      "title": "Contribution"
+     },
+     "direction": {
+      "type": "string",
+      "title": "Direction"
+     }
+    },
+    "type": "object",
+    "required": [
+     "label",
+     "value",
+     "contribution",
+     "direction"
+    ],
+    "title": "WinProbabilityDriver",
+    "description": "One factor moving the in-game win probability at a moment (thinking panel)."
+   },
+   "WinProbabilityPoint": {
+    "properties": {
+     "event_num": {
+      "type": "integer",
+      "title": "Event Num"
+     },
+     "period": {
+      "type": "integer",
+      "title": "Period"
+     },
+     "clock": {
+      "type": "string",
+      "title": "Clock"
+     },
+     "seconds_remaining": {
+      "type": "integer",
+      "title": "Seconds Remaining"
+     },
+     "home_score": {
+      "type": "integer",
+      "title": "Home Score"
+     },
+     "away_score": {
+      "type": "integer",
+      "title": "Away Score"
+     },
+     "home_win_prob": {
+      "type": "number",
+      "title": "Home Win Prob"
+     },
+     "description": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Description"
+     },
+     "drivers": {
+      "items": {
+       "$ref": "#/components/schemas/WinProbabilityDriver"
+      },
+      "type": "array",
+      "title": "Drivers"
+     }
+    },
+    "type": "object",
+    "required": [
+     "event_num",
+     "period",
+     "clock",
+     "seconds_remaining",
+     "home_score",
+     "away_score",
+     "home_win_prob",
+     "description",
+     "drivers"
+    ],
+    "title": "WinProbabilityPoint",
+    "description": "One moment on the in-game win-probability timeline (one play-by-play event)."
    },
    "nbaforecast__api__schemas__games__TeamSummary": {
     "properties": {

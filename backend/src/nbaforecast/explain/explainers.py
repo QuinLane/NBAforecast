@@ -12,6 +12,7 @@ described in explainability.md §6; that task hasn't landed yet, so this one pro
 schema-valid, structurally-correct explanations now and gets prettier later, deliberately.
 """
 
+from collections.abc import Callable
 from typing import Any
 
 import numpy as np
@@ -62,8 +63,13 @@ def explain_lightgbm_classifier(
     features: pd.DataFrame,
     *,
     units: ExplanationUnits = ExplanationUnits.PROBABILITY_POINTS,
+    design_fn: Callable[[pd.DataFrame], pd.DataFrame] = design_matrix,
 ) -> Explanation:
     """TreeSHAP explanation for one row of a LightGBM binary classifier (e.g. game win-prob).
+
+    ``design_fn`` selects/casts the model's feature columns from ``features`` — defaults to the
+    pre-game head's design matrix; the in-game head passes its own so both classifiers share this
+    one TreeSHAP path.
 
     SHAP values for a tree classifier come out in log-odds (margin) space (explainability.md
     §3). For ``units=PROBABILITY_POINTS``, contributions are converted via a *cumulative*
@@ -75,7 +81,7 @@ def explain_lightgbm_classifier(
     if len(features) != 1:
         raise ValueError("explain_lightgbm_classifier explains exactly one row at a time")
 
-    design = design_matrix(features)
+    design = design_fn(features)
     explainer = model.get("explainer") or shap.TreeExplainer(model["booster"])
     raw_shap = explainer.shap_values(design)
     # Some shap/LightGBM version combinations return a [class0, class1] list for binary

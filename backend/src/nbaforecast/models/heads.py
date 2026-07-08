@@ -13,6 +13,7 @@ from nbaforecast.models.game_prediction.margin import LightGBMMarginHead
 from nbaforecast.models.game_prediction.total import LightGBMTotalHead
 from nbaforecast.models.game_prediction.win_prob import LightGBMWinProbHead
 from nbaforecast.models.props.regressor import PropsRegressorHead
+from nbaforecast.models.win_probability.in_game import LightGBMInGameWinProbHead
 
 PROPS_STATS: tuple[str, ...] = ("pts", "reb", "ast", "fg3m")
 
@@ -20,5 +21,6 @@ HEAD_REGISTRY: dict[str, ModelHead[Any]] = {
     "game_win": LightGBMWinProbHead(),
     "game_margin": LightGBMMarginHead(),
     "game_total": LightGBMTotalHead(),
+    "in_game_win": LightGBMInGameWinProbHead(),
     **{f"props_{stat}": PropsRegressorHead(stat) for stat in PROPS_STATS},
 }

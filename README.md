@@ -236,15 +236,49 @@ NBAforecast/
 └── infra/       # Docker and deploy config
 ```
 
-## Getting started
+## Run it locally
 
-Still early in development. Once the stack is wired up, the whole thing runs locally with Docker:
+**Prerequisites:** Docker Desktop (running), Node 20+, and [pnpm](https://pnpm.io/). Python 3.12+ +
+[uv](https://docs.astral.sh/uv/) are only needed if you want to run ingestion/training yourself.
 
-```bash
-docker-compose up
+**One command** (recommended):
+
+```powershell
+./scripts/dev.ps1      # Windows (PowerShell)
 ```
 
-Prerequisites: Docker Desktop, Python 3.12+, Node 20+, uv, pnpm.
+```bash
+./scripts/dev.sh       # macOS / Linux
+```
+
+This starts the backend stack (Postgres, Redis, MinIO, MLflow, and the FastAPI app) in Docker,
+waits for the API, then launches the Next.js frontend. When it's up:
+
+- **App** → http://localhost:3000
+- **API docs** → http://localhost:8000/docs
+- **MLflow** (model runs + champions) → http://localhost:5000
+
+Ctrl+C stops the frontend; the Docker stack keeps running (`docker compose down` to stop it).
+
+**Manual** (two terminals), if you'd rather not use the script:
+
+```bash
+docker compose up -d                 # 1) backend stack + API on :8000
+pnpm --dir frontend install          # 2) first run only
+pnpm --dir frontend dev              #    frontend on :3000  (creates frontend/.env.local if absent)
+```
+
+The frontend reaches the API through a same-origin `/backend` proxy (see `frontend/next.config.ts`),
+so no CORS setup is needed. `frontend/.env.local` holds the two dev vars the script writes for you:
+
+```
+API_PROXY_TARGET=http://127.0.0.1:8000
+NEXT_PUBLIC_API_URL=http://127.0.0.1:3000/backend
+```
+
+> The app renders real predictions only after data is ingested and champion models are promoted
+> (see the ingestion/training CLIs: `nbaforecast-backfill`, `nbaforecast-train`). A validation
+> season (2025-26) is already loaded in this environment.
 
 ## Data sources
 

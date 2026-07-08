@@ -327,6 +327,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/models/champions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Champions
+         * @description Provenance for every head with a promoted champion (version, trained-through, features).
+         */
+        get: operations["list_champions_api_v1_models_champions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -405,6 +425,25 @@ export interface components {
             fta: number;
             /** Players */
             players: components["schemas"]["BoxScorePlayerLine"][];
+        };
+        /**
+         * ChampionProvenance
+         * @description Provenance for one head's current champion — the "how current is this model?" line.
+         *
+         *     Surfaced in the UI next to predictions so every projection carries its own paper trail:
+         *     which model version produced it, what season it was trained through, and the feature version.
+         */
+        ChampionProvenance: {
+            /** Head */
+            head: string;
+            /** Version */
+            version: string;
+            /** Feature Version */
+            feature_version: string | null;
+            /** Trained Through Season */
+            trained_through_season: string | null;
+            /** Trained At */
+            trained_at: string | null;
         };
         /**
          * Contribution
@@ -1578,6 +1617,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_champions_api_v1_models_champions_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChampionProvenance"][];
                 };
             };
         };

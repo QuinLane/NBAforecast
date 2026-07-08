@@ -371,6 +371,40 @@ def test_list_and_get_team(client: TestClient) -> None:
     assert client.get("/api/v1/teams/99999999").status_code == 404
 
 
+def test_team_profile_has_record_roster_and_recent(client: TestClient) -> None:
+    team_id = client.get("/api/v1/teams").json()["items"][0]["team_id"]
+    body = client.get(f"/api/v1/teams/{team_id}/profile").json()
+    assert body["team"]["team_id"] == team_id
+    assert len(body["roster"]) > 0
+    assert len(body["recent_games"]) > 0
+    # Total record is at least the finals visible in the (capped) recent window.
+    final_recent = sum(1 for g in body["recent_games"] if g["status"] == "final")
+    assert body["wins"] + body["losses"] >= final_recent
+
+
+def test_team_profile_unknown_team_is_404(client: TestClient) -> None:
+    assert client.get("/api/v1/teams/99999999/profile").status_code == 404
+
+
+def test_head_to_head_record_matches_played_games(client: TestClient) -> None:
+    teams = client.get("/api/v1/teams").json()["items"]
+    a, b = teams[0]["team_id"], teams[1]["team_id"]
+    body = client.get(f"/api/v1/teams/{a}/head-to-head", params={"opponent": b}).json()
+    assert body["team"]["team_id"] == a
+    assert body["opponent"]["team_id"] == b
+    # games is the full series (uncapped), so the record equals its played games exactly.
+    played = sum(1 for g in body["games"] if g["status"] == "final")
+    assert body["team_wins"] + body["opponent_wins"] == played
+
+
+def test_head_to_head_unknown_opponent_is_404(client: TestClient) -> None:
+    team_id = client.get("/api/v1/teams").json()["items"][0]["team_id"]
+    response = client.get(
+        f"/api/v1/teams/{team_id}/head-to-head", params={"opponent": 99999999}
+    )
+    assert response.status_code == 404
+
+
 # ── box score ─────────────────────────────────────────────────────────────────────────────────
 
 

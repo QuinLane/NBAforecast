@@ -103,6 +103,12 @@ async def list_games(
     )
 
 
+async def summarize_games(session: AsyncSession, games: list[Game]) -> list[GameSummary]:
+    """Map ``Game`` rows to ``GameSummary`` with a single shared team lookup (reused by teams)."""
+    teams = await _team_lookup(session)
+    return [_to_summary(game, teams) for game in games]
+
+
 async def get_game(session: AsyncSession, game_id: str) -> GameDetail | None:
     """``GET /games/{game_id}`` — full game record, or ``None`` if it doesn't exist."""
     game = await session.get(Game, game_id)

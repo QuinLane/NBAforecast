@@ -4,6 +4,7 @@ import { use } from "react";
 import Link from "next/link";
 import { PlayerHeadshot, TeamLogo } from "@/components/nba-images";
 import { PlayerTrajectory } from "@/components/player-trajectory";
+import { ShotChart } from "@/components/shot-chart";
 import {
   usePlayer,
   usePlayerProps,
@@ -219,10 +220,11 @@ export default function PlayerDetailPage({
         </section>
       )}
 
-      {/* Stat trajectory + season averages (players with ingested games) */}
+      {/* Stat trajectory, shot chart + season averages (players with ingested games) */}
       {player && player.recent_games.length > 0 && (
         <>
           <PlayerTrajectory playerId={playerId} />
+          <ShotChart playerId={playerId} />
           <SeasonAveragesTable playerId={playerId} />
         </>
       )}

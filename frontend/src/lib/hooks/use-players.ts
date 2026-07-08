@@ -17,6 +17,8 @@ export const playerPropsQueryKey = (playerId: number, gameId: string) =>
   ["players", playerId, "props", gameId] as const;
 export const playerStatsQueryKey = (playerId: number) =>
   ["players", playerId, "stats"] as const;
+export const playerShotsQueryKey = (playerId: number, season?: string) =>
+  ["players", playerId, "shots", season ?? "all"] as const;
 
 export function usePlayers(params?: PlayersParams) {
   return useQuery({
@@ -71,6 +73,26 @@ export function usePlayerStats(playerId: number) {
         { params: { path: { player_id: playerId } } },
       );
       if (error) throw new Error("Failed to fetch player stats");
+      return data;
+    },
+  });
+}
+
+/** Field-goal attempts for the shot chart (optionally one season). */
+export function usePlayerShots(playerId: number, season?: string) {
+  return useQuery({
+    queryKey: playerShotsQueryKey(playerId, season),
+    queryFn: async () => {
+      const { data, error } = await apiClient.GET(
+        "/api/v1/players/{player_id}/shots",
+        {
+          params: {
+            path: { player_id: playerId },
+            query: season ? { season } : undefined,
+          },
+        },
+      );
+      if (error) throw new Error("Failed to fetch shots");
       return data;
     },
   });

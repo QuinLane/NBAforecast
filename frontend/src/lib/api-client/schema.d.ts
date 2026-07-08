@@ -1219,6 +1219,7 @@ export interface operations {
             query?: {
                 active?: boolean | null;
                 with_stats?: boolean;
+                search?: string | null;
                 page?: number;
                 page_size?: number;
             };

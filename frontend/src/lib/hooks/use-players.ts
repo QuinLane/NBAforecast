@@ -4,6 +4,7 @@ import { apiClient } from "../api-client/client";
 export type PlayersParams = {
   active?: boolean;
   with_stats?: boolean;
+  search?: string;
   page?: number;
   page_size?: number;
 };
@@ -39,6 +40,22 @@ export function usePlayer(playerId: number) {
         { params: { path: { player_id: playerId } } },
       );
       if (error) throw new Error(`Player ${playerId} not found`);
+      return data;
+    },
+  });
+}
+
+/** Name search over players-with-stats, gated on a 2+ char query. Powers the header search. */
+export function usePlayerSearch(query: string, limit = 6) {
+  const q = query.trim();
+  return useQuery({
+    queryKey: ["players", "search", q, limit] as const,
+    enabled: q.length >= 2,
+    queryFn: async () => {
+      const { data, error } = await apiClient.GET("/api/v1/players", {
+        params: { query: { search: q, with_stats: true, page_size: limit } },
+      });
+      if (error) throw new Error("Player search failed");
       return data;
     },
   });

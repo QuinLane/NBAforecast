@@ -2,12 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { HeaderSearch } from "@/components/header-search";
 
 const NAV = [
   { href: "/games", label: "Games" },
   { href: "/rapm", label: "RAPM" },
   { href: "/players", label: "Players" },
   { href: "/teams", label: "Teams" },
+  { href: "/leaderboards", label: "Leaders" },
 ];
 
 /** Global app shell header (frontend-design.md §5) — wordmark + primary nav, active-route aware. */
@@ -40,6 +42,9 @@ export function SiteHeader() {
               </Link>
             );
           })}
+        </div>
+        <div className="ml-auto">
+          <HeaderSearch />
         </div>
       </nav>
     </header>

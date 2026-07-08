@@ -30,6 +30,20 @@ from nbaforecast.storage.object_store import ObjectStore
 
 logger = logging.getLogger(__name__)
 
+
+def _progress_logger() -> "logging.Logger | logging.LoggerAdapter[logging.Logger]":
+    """Prefect captures (and hides) plain module loggers during a flow run, so progress lines go
+    through Prefect's run logger when we're inside a flow — that's what reaches the run's log
+    output/file. Falls back to the module logger for direct calls (tests, ad-hoc scripts)."""
+    try:
+        from prefect.exceptions import MissingContextError
+        from prefect.logging import get_run_logger
+
+        return get_run_logger()
+    except (MissingContextError, ImportError):
+        return logger
+
+
 # Earliest comprehensive play-by-play/shot season on stats.nba.com (roadmap §5, M1 DoD).
 PBP_ERA_START_YEAR = 1996
 # Season types backfilled across the era.
@@ -68,7 +82,8 @@ async def _run_games(metas: list[GameMeta], *, label: str = "") -> list[GameMeta
         )
     pending = [m for m in metas if m.game_id not in complete]
     total_pending = len(pending)
-    logger.info("[backfill] %s: %d pending of %d games", label, total_pending, len(metas))
+    plog = _progress_logger()
+    plog.info("[backfill] %s: %d pending of %d games", label, total_pending, len(metas))
 
     concurrency = max(1, get_settings().ingest_concurrency)
     semaphore = asyncio.Semaphore(concurrency)
@@ -92,7 +107,7 @@ async def _run_games(metas: list[GameMeta], *, label: str = "") -> list[GameMeta
         async with progress_lock:
             done += 1
             if done % 10 == 0 or done == total_pending:
-                logger.info(
+                plog.info(
                     "[backfill] %s: %d/%d done, %d remaining",
                     label,
                     done,
@@ -102,7 +117,7 @@ async def _run_games(metas: list[GameMeta], *, label: str = "") -> list[GameMeta
 
     await asyncio.gather(*(_ingest_one(meta) for meta in pending))
     if failed:
-        logger.warning("[backfill] %s: %d game(s) failed this run: %s", label, len(failed), failed)
+        plog.warning("[backfill] %s: %d game(s) failed this run: %s", label, len(failed), failed)
     return [m for m in pending if m.game_id not in set(failed)]
 
 
@@ -162,8 +177,9 @@ async def backfill_era(
         for year in range(start_year, end_year + 1)
         for season_type in season_types
     ]
+    plog = _progress_logger()
     for i, (season, season_type) in enumerate(steps, start=1):
-        logger.info(
+        plog.info(
             "[backfill] === season %d/%d: %s %s (era total so far: %d games) ===",
             i,
             len(steps),
@@ -172,5 +188,5 @@ async def backfill_era(
             total,
         )
         total += await backfill_season(season, season_type)
-    logger.info("[backfill] era complete: %d games processed across %d seasons", total, len(steps))
+    plog.info("[backfill] era complete: %d games processed across %d seasons", total, len(steps))
     return total

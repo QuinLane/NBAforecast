@@ -14,6 +14,8 @@ export const gamesQueryKey = (params?: GamesParams) =>
 export const gameQueryKey = (gameId: string) => ["games", gameId] as const;
 export const gameBoxScoreQueryKey = (gameId: string) =>
   ["games", gameId, "boxscore"] as const;
+export const gameWinProbabilityQueryKey = (gameId: string) =>
+  ["games", gameId, "win-probability"] as const;
 
 export function useGames(params?: GamesParams) {
   return useQuery({
@@ -36,6 +38,23 @@ export function useGame(gameId: string) {
         params: { path: { game_id: gameId } },
       });
       if (error) throw new Error(`Game ${gameId} not found`);
+      return data;
+    },
+  });
+}
+
+/** In-game win-probability timeline. 404s until played; 503 until a champion is loaded. */
+export function useGameWinProbability(gameId: string, enabled = true) {
+  return useQuery({
+    queryKey: gameWinProbabilityQueryKey(gameId),
+    enabled: enabled && gameId !== "",
+    retry: false,
+    queryFn: async () => {
+      const { data, error } = await apiClient.GET(
+        "/api/v1/games/{game_id}/win-probability",
+        { params: { path: { game_id: gameId } } },
+      );
+      if (error) throw new Error("Win-probability timeline unavailable");
       return data;
     },
   });

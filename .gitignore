@@ -58,3 +58,4 @@ Thumbs.db
 
 # Claude Code — machine-local settings
 .claude/settings.local.json
+backfill.log

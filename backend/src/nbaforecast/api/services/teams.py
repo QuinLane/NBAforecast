@@ -34,6 +34,49 @@ def _team_won(game: Game, team_id: int) -> bool | None:
     return home_won if game.home_team_id == team_id else not home_won
 
 
+async def _current_roster(
+    session: AsyncSession, team_id: int, *, season: str | None
+) -> list[Player]:
+    """Players whose most recent game *in the team's current season* was for this team.
+
+    Anchoring on each player's latest game (not "ever played for the team") keeps a mid-season
+    trade on one roster only — the team they were last with — and scopes the roster to the
+    current season so a full-era backfill doesn't list decades of alumni.
+    """
+    if season is None:
+        return []
+    # Rank each player's games in the season by recency; their rank-1 team is their current team.
+    ranked = (
+        select(
+            PlayerGameStats.player_id.label("player_id"),
+            PlayerGameStats.team_id.label("team_id"),
+            func.row_number()
+            .over(
+                partition_by=PlayerGameStats.player_id,
+                order_by=(Game.game_date.desc(), Game.game_id.desc()),
+            )
+            .label("rn"),
+        )
+        .join(Game, Game.game_id == PlayerGameStats.game_id)
+        .where(Game.season == season)
+        .subquery()
+    )
+    latest_team_is_this = select(ranked.c.player_id).where(
+        ranked.c.rn == 1, ranked.c.team_id == team_id
+    )
+    return list(
+        (
+            await session.execute(
+                select(Player)
+                .where(Player.player_id.in_(latest_team_is_this))
+                .order_by(Player.full_name)
+            )
+        )
+        .scalars()
+        .all()
+    )
+
+
 async def list_teams(
     session: AsyncSession, *, page: int = 1, page_size: int = 50
 ) -> Page[TeamSummary]:
@@ -75,18 +118,8 @@ async def team_profile(
     wins = sum(1 for g in team_games if _team_won(g, team_id) is True)
     losses = sum(1 for g in team_games if _team_won(g, team_id) is False)
 
-    roster_players = (
-        (
-            await session.execute(
-                select(Player)
-                .join(PlayerGameStats, Player.player_id == PlayerGameStats.player_id)
-                .where(PlayerGameStats.team_id == team_id)
-                .distinct()
-                .order_by(Player.full_name)
-            )
-        )
-        .scalars()
-        .all()
+    roster_players = await _current_roster(
+        session, team_id, season=team_games[0].season if team_games else None
     )
     roster = [
         PlayerSummary(

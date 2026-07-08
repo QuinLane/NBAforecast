@@ -4,6 +4,7 @@ from datetime import date
 
 from pydantic import BaseModel
 
+from nbaforecast.api.schemas.games import GameSummary
 from nbaforecast.explain.schema import Explanation
 
 
@@ -123,6 +124,26 @@ class TeamSummary(BaseModel):
     full_name: str
     conference: str | None
     division: str | None
+
+
+class TeamProfile(BaseModel):
+    """``GET /teams/{team_id}/profile`` — record + roster + recent games for a team page."""
+
+    team: TeamSummary
+    wins: int
+    losses: int
+    roster: list[PlayerSummary]
+    recent_games: list[GameSummary]
+
+
+class HeadToHead(BaseModel):
+    """``GET /teams/{team_id}/head-to-head`` — the series between two teams and its record."""
+
+    team: TeamSummary
+    opponent: TeamSummary
+    team_wins: int
+    opponent_wins: int
+    games: list[GameSummary]
 
 
 class LeaderboardEntry(BaseModel):

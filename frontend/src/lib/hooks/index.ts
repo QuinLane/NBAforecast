@@ -35,7 +35,11 @@ export {
 export {
   useTeams,
   useTeam,
+  useTeamProfile,
+  useHeadToHead,
   teamsQueryKey,
   teamQueryKey,
+  teamProfileQueryKey,
+  headToHeadQueryKey,
   type TeamsParams,
 } from "./use-teams";

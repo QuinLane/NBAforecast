@@ -140,6 +140,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/teams/{team_id}/profile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Team Profile */
+        get: operations["get_team_profile_api_v1_teams__team_id__profile_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/teams/{team_id}/head-to-head": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Head To Head */
+        get: operations["get_head_to_head_api_v1_teams__team_id__head_to_head_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/players": {
         parameters: {
             query?: never;
@@ -495,6 +529,20 @@ export interface components {
             detail?: components["schemas"]["ValidationError"][];
         };
         /**
+         * HeadToHead
+         * @description ``GET /teams/{team_id}/head-to-head`` — the series between two teams and its record.
+         */
+        HeadToHead: {
+            team: components["schemas"]["nbaforecast__api__schemas__players__TeamSummary"];
+            opponent: components["schemas"]["nbaforecast__api__schemas__players__TeamSummary"];
+            /** Team Wins */
+            team_wins: number;
+            /** Opponent Wins */
+            opponent_wins: number;
+            /** Games */
+            games: components["schemas"]["GameSummary"][];
+        };
+        /**
          * LeaderboardEntry
          * @description One row of a generic stat leaderboard — ``GET /stats/leaderboards``.
          */
@@ -793,6 +841,21 @@ export interface components {
             /** Location Reliable */
             location_reliable: boolean;
         };
+        /**
+         * TeamProfile
+         * @description ``GET /teams/{team_id}/profile`` — record + roster + recent games for a team page.
+         */
+        TeamProfile: {
+            team: components["schemas"]["nbaforecast__api__schemas__players__TeamSummary"];
+            /** Wins */
+            wins: number;
+            /** Losses */
+            losses: number;
+            /** Roster */
+            roster: components["schemas"]["PlayerSummary"][];
+            /** Recent Games */
+            recent_games: components["schemas"]["GameSummary"][];
+        };
         /** ValidationError */
         ValidationError: {
             /** Location */
@@ -1074,6 +1137,70 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["nbaforecast__api__schemas__players__TeamSummary"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_team_profile_api_v1_teams__team_id__profile_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                team_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TeamProfile"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_head_to_head_api_v1_teams__team_id__head_to_head_get: {
+        parameters: {
+            query: {
+                opponent: number;
+            };
+            header?: never;
+            path: {
+                team_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HeadToHead"];
                 };
             };
             /** @description Validation Error */

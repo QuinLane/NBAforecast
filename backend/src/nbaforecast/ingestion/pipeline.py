@@ -6,12 +6,14 @@ parse → validate-and-load (silver). The Prefect flows in :mod:`nbaforecast.ing
 these with retries, concurrency, and scheduling.
 """
 
+import asyncio
 import logging
 from dataclasses import dataclass
 from datetime import date
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from nbaforecast.ingestion.checkpoint import POSSESSIONS_MIN_SEASON_YEAR
 from nbaforecast.ingestion.clients.nba_stats import (
     fetch_boxscore,
     fetch_pbp,
@@ -103,7 +105,11 @@ async def ingest_game(session: AsyncSession, store: ObjectStore, meta: GameMeta)
     """
     gid, season, year = meta.game_id, meta.season, meta.season_start_year
 
-    box_raw = fetch_boxscore(gid)
+    # The nba_api / pbpstats fetchers are blocking (curl_cffi is synchronous); run them in a
+    # worker thread so several games' ingests overlap on the event loop. The shared request
+    # throttle still serialises the actual upstream calls, so concurrency can't exceed the
+    # configured rate — it just hides network latency behind the throttle gate.
+    box_raw = await asyncio.to_thread(fetch_boxscore, gid)
     store.put_raw(STATS_SOURCE, "boxscore", season, gid, box_raw)
     # Players who debuted after nba_api's static index (rookies, two-way signings) would
     # FK-violate player_game_stats — seed them from the boxscore itself (self-healing).
@@ -131,7 +137,7 @@ async def ingest_game(session: AsyncSession, store: ObjectStore, meta: GameMeta)
         endpoint="boxscore",
     )
 
-    pbp_raw = fetch_pbp(gid)
+    pbp_raw = await asyncio.to_thread(fetch_pbp, gid)
     store.put_raw(STATS_SOURCE, "pbp", season, gid, pbp_raw)
     await load_silver(
         session,
@@ -145,7 +151,9 @@ async def ingest_game(session: AsyncSession, store: ObjectStore, meta: GameMeta)
         endpoint="pbp",
     )
 
-    shots_raw = fetch_shots(gid, season=season, season_type=meta.season_type)
+    shots_raw = await asyncio.to_thread(
+        fetch_shots, gid, season=season, season_type=meta.season_type
+    )
     store.put_raw(STATS_SOURCE, "shots", season, gid, shots_raw)
     await load_silver(
         session,
@@ -159,20 +167,25 @@ async def ingest_game(session: AsyncSession, store: ObjectStore, meta: GameMeta)
         endpoint="shots",
     )
 
-    poss_raw = fetch_possessions(gid)
-    store.put_raw(PBP_SOURCE, "possessions", season, gid, poss_raw)
-    await load_silver(
-        session,
-        store,
-        "possessions",
-        parse_possessions(poss_raw, gid),
-        season_start_year=year,
-        partition_key=gid,
-        raw_payload=poss_raw,
-        source=PBP_SOURCE,
-        endpoint="possessions",
-        game_id=gid,
-    )
+    entities = {"boxscore", "pbp", "shots"}
+    # Possessions only exist on cdn.nba.com from 2019-20; older games land without them (RAPM
+    # uses a recent 3-season window, so pre-era possessions aren't needed) rather than failing.
+    if year >= POSSESSIONS_MIN_SEASON_YEAR:
+        poss_raw = await asyncio.to_thread(fetch_possessions, gid)
+        store.put_raw(PBP_SOURCE, "possessions", season, gid, poss_raw)
+        await load_silver(
+            session,
+            store,
+            "possessions",
+            parse_possessions(poss_raw, gid),
+            season_start_year=year,
+            partition_key=gid,
+            raw_payload=poss_raw,
+            source=PBP_SOURCE,
+            endpoint="possessions",
+            game_id=gid,
+        )
+        entities.add("possessions")
 
     logger.info("ingested game %s", gid)
-    return {"boxscore", "pbp", "shots", "possessions"}
+    return entities

@@ -53,10 +53,12 @@ class Settings(BaseSettings):
     pbpstats_cache_dir: str = "data/pbpstats_cache"
     # Root of the silver Parquet analytical store (partitioned by season_start_year).
     parquet_root: str = "data/silver"
-    # Nightly ingest schedule (cron + timezone) and per-call concurrency cap.
+    # Nightly ingest schedule (cron + timezone) and how many games ingest at once during a
+    # backfill. The shared request throttle still bounds the upstream call rate, so this only
+    # overlaps network latency across games; keep it modest to stay clear of rate limits.
     ingest_daily_cron: str = "0 6 * * *"
     ingest_timezone: str = "America/New_York"
-    ingest_concurrency: int = 1
+    ingest_concurrency: int = 4
 
     # ── App ───────────────────────────────────────────────────────────────
     env: Literal["development", "test", "production"] = "development"

@@ -2,6 +2,7 @@
 
 import { use } from "react";
 import Link from "next/link";
+import { ModelProvenance } from "@/components/model-provenance";
 import { PlayerHeadshot, TeamLogo } from "@/components/nba-images";
 import { PlayerTrajectory } from "@/components/player-trajectory";
 import { ShotChart } from "@/components/shot-chart";
@@ -33,34 +34,51 @@ function PropsBoard({ playerId, gameId }: { playerId: number; gameId: string }) 
     );
   }
   return (
-    <div className="grid grid-cols-2 gap-2">
-      {data.map((p) => {
-        const topDriver = p.explanation.contributions[0];
-        return (
-          <div
-            key={p.stat}
-            className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-3 space-y-1"
-          >
-            <div className="text-xs text-zinc-500">
-              {STAT_LABELS[p.stat] ?? p.stat}
-            </div>
-            <div className="flex items-baseline gap-1">
-              <span className="text-2xl font-bold font-mono">
-                {p.point.toFixed(1)}
-              </span>
-              <span className="text-xs text-zinc-600 font-mono">
-                [{p.interval_low.toFixed(0)}–{p.interval_high.toFixed(0)}]
-              </span>
-            </div>
-            {topDriver && (
-              <div className="text-[11px] text-zinc-500 truncate">
-                {topDriver.direction === "up" ? "▲" : "▼"}{" "}
-                {topDriver.display_label}
+    <div className="space-y-2">
+      <div className="grid grid-cols-2 gap-2">
+        {data.map((p) => {
+          const topDriver = p.explanation.contributions[0];
+          const span = p.interval_high - p.interval_low;
+          // Where the point estimate sits within its 80% band (for the marker).
+          const pointPct =
+            span > 0
+              ? Math.min(100, Math.max(0, ((p.point - p.interval_low) / span) * 100))
+              : 50;
+          return (
+            <div
+              key={p.stat}
+              className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-3 space-y-1.5"
+            >
+              <div className="text-xs text-zinc-500">
+                {STAT_LABELS[p.stat] ?? p.stat}
               </div>
-            )}
-          </div>
-        );
-      })}
+              <div className="text-2xl font-bold font-mono leading-none">
+                {p.point.toFixed(1)}
+              </div>
+              {/* 80% uncertainty band, rendered under the point estimate */}
+              <div className="pt-0.5">
+                <div className="relative h-1.5 rounded-full bg-emerald-500/15">
+                  <div
+                    className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 size-2.5 rounded-full bg-emerald-400 ring-2 ring-zinc-900"
+                    style={{ left: `${pointPct}%` }}
+                  />
+                </div>
+                <div className="flex justify-between text-[10px] text-zinc-600 font-mono mt-1">
+                  <span>{p.interval_low.toFixed(0)}</span>
+                  <span className="text-zinc-500">80% range</span>
+                  <span>{p.interval_high.toFixed(0)}</span>
+                </div>
+              </div>
+              {topDriver && (
+                <div className="text-[11px] text-zinc-500 truncate">
+                  {topDriver.direction === "up" ? "▲" : "▼"} {topDriver.display_label}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+      <ModelProvenance head={`props_${data[0].stat}`} featuresAsOf="tip-off" />
     </div>
   );
 }

@@ -3,6 +3,7 @@
 import { use, useState } from "react";
 import Link from "next/link";
 import { GameBoxScore } from "@/components/game-boxscore";
+import { ModelProvenance } from "@/components/model-provenance";
 import { TeamLogo } from "@/components/nba-images";
 import { PredictionExplainer } from "@/components/prediction-explainer";
 import { WinProbabilityTimeline } from "@/components/win-probability-timeline";
@@ -169,6 +170,8 @@ export default function GameDetailPage({
       ) : predQ.isPending ? (
         <div className="h-64 rounded-xl bg-zinc-800/50 animate-pulse" />
       ) : null}
+
+      {prediction && <ModelProvenance head="game_win" featuresAsOf="tip-off" />}
 
       {/* In-game win-probability timeline (played games only) */}
       <WinProbabilityTimeline gameId={id} enabled={game?.status === "final"} />

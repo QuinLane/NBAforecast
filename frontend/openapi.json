@@ -1070,6 +1070,32 @@
      }
     }
    }
+  },
+  "/api/v1/models/champions": {
+   "get": {
+    "tags": [
+     "models"
+    ],
+    "summary": "List Champions",
+    "description": "Provenance for every head with a promoted champion (version, trained-through, features).",
+    "operationId": "list_champions_api_v1_models_champions_get",
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "items": {
+          "$ref": "#/components/schemas/ChampionProvenance"
+         },
+         "type": "array",
+         "title": "Response List Champions Api V1 Models Champions Get"
+        }
+       }
+      }
+     }
+    }
+   }
   }
  },
  "components": {
@@ -1274,6 +1300,62 @@
     ],
     "title": "BoxScoreTeam",
     "description": "One team's totals plus its player lines, ordered starters-then-minutes."
+   },
+   "ChampionProvenance": {
+    "properties": {
+     "head": {
+      "type": "string",
+      "title": "Head"
+     },
+     "version": {
+      "type": "string",
+      "title": "Version"
+     },
+     "feature_version": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Feature Version"
+     },
+     "trained_through_season": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Trained Through Season"
+     },
+     "trained_at": {
+      "anyOf": [
+       {
+        "type": "string",
+        "format": "date-time"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Trained At"
+     }
+    },
+    "type": "object",
+    "required": [
+     "head",
+     "version",
+     "feature_version",
+     "trained_through_season",
+     "trained_at"
+    ],
+    "title": "ChampionProvenance",
+    "description": "Provenance for one head's current champion \u2014 the \"how current is this model?\" line.\n\nSurfaced in the UI next to predictions so every projection carries its own paper trail:\nwhich model version produced it, what season it was trained through, and the feature version."
    },
    "Contribution": {
     "properties": {

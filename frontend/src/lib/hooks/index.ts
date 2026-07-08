@@ -54,3 +54,4 @@ export {
   type LeaderboardStat,
   type LeaderboardParams,
 } from "./use-stats";
+export { useChampions, championsQueryKey } from "./use-models";

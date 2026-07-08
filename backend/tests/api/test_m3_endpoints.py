@@ -399,9 +399,7 @@ def test_head_to_head_record_matches_played_games(client: TestClient) -> None:
 
 def test_head_to_head_unknown_opponent_is_404(client: TestClient) -> None:
     team_id = client.get("/api/v1/teams").json()["items"][0]["team_id"]
-    response = client.get(
-        f"/api/v1/teams/{team_id}/head-to-head", params={"opponent": 99999999}
-    )
+    response = client.get(f"/api/v1/teams/{team_id}/head-to-head", params={"opponent": 99999999})
     assert response.status_code == 404
 
 

@@ -6,6 +6,7 @@ completed and scheduled games), then for each stat call the champion ``props_{st
 point estimate, prediction interval, and SHAP explanation.
 """
 
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from nbaforecast.api.model_provider import ModelProvider
@@ -40,9 +41,18 @@ async def player_props(
     if game is None or player is None:
         return None
 
-    games_df = await load_table_as_dataframe(session, Game)
-    player_game_stats_df = await load_table_as_dataframe(session, PlayerGameStats)
-    team_game_stats_df = await load_table_as_dataframe(session, TeamGameStats)
+    # Scope to the game's season (fast, and matches the champions' single-season training
+    # context — see services/games.py's prediction path for the full rationale).
+    season_games = select(Game.game_id).where(Game.season_start_year == game.season_start_year)
+    games_df = await load_table_as_dataframe(
+        session, Game, where=[Game.season_start_year == game.season_start_year]
+    )
+    player_game_stats_df = await load_table_as_dataframe(
+        session, PlayerGameStats, where=[PlayerGameStats.game_id.in_(season_games)]
+    )
+    team_game_stats_df = await load_table_as_dataframe(
+        session, TeamGameStats, where=[TeamGameStats.game_id.in_(season_games)]
+    )
     players_df = await load_table_as_dataframe(session, Player)
 
     if game.status in ("scheduled", "live"):

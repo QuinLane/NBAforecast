@@ -11,7 +11,7 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
-from sqlalchemy import delete, func, select
+from sqlalchemy import ColumnElement, delete, func, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -54,21 +54,28 @@ def to_db_records(df: pd.DataFrame) -> list[dict[str, Any]]:
     return [{str(k): clean_db_value(v) for k, v in row.items()} for row in df.to_dict("records")]
 
 
-async def load_table_as_dataframe(session: AsyncSession, model: type[Base]) -> pd.DataFrame:
-    """Read every row of ``model`` into a DataFrame. Selects the underlying ``Table`` directly so
-    the result is plain columns, not ORM instances.
+async def load_table_as_dataframe(
+    session: AsyncSession,
+    model: type[Base],
+    *,
+    where: list[ColumnElement[bool]] | None = None,
+) -> pd.DataFrame:
+    """Read rows of ``model`` into a DataFrame. Selects the underlying ``Table`` directly so the
+    result is plain columns, not ORM instances.
 
-    Used for both batch jobs (``features/flows.py``'s nightly refresh) and, for now, the games
-    prediction request path (``api/services/games.py``) — a full-table load per request doesn't
-    scale to production data volumes and should be replaced by a narrower query or a feature
-    cache before launch; M2's vertical slice is about correctness first.
+    ``where`` scopes the load (e.g. to one season's games) — essential on the request path, where
+    a full-table load doesn't scale as history accumulates. Batch jobs (``features/flows.py``'s
+    refresh) still load the whole table for full rolling/Elo context.
 
     ``Numeric``/``DECIMAL`` columns come back from the DBAPI as ``decimal.Decimal`` (an
     object-dtype column, with plain Python ``None`` for ``NULL`` rather than ``NaN``) — every
     primitive/feature function downstream assumes ordinary float64 + ``NaN`` semantics, so those
     columns are coerced here rather than at every call site.
     """
-    rows = (await session.execute(select(model.__table__))).mappings().all()
+    stmt = select(model.__table__)
+    if where is not None:
+        stmt = stmt.where(*where)
+    rows = (await session.execute(stmt)).mappings().all()
     return _coerce_decimal_columns(pd.DataFrame(rows))
 
 

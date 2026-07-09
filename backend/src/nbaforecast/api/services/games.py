@@ -250,8 +250,17 @@ async def get_game_prediction(
     if game is None:
         return None
 
-    games_df = await load_table_as_dataframe(session, Game)
-    team_game_stats_df = await load_table_as_dataframe(session, TeamGameStats)
+    # Scope the feature build to the game's own season: it's fast (one season, not the full
+    # backfilled history), and it reproduces the single-season context the champions were trained
+    # on — so within-season rolling/Elo/season-to-date features (and thus predictions) match
+    # training exactly instead of drifting as older seasons are backfilled in.
+    season_games = select(Game.game_id).where(Game.season_start_year == game.season_start_year)
+    games_df = await load_table_as_dataframe(
+        session, Game, where=[Game.season_start_year == game.season_start_year]
+    )
+    team_game_stats_df = await load_table_as_dataframe(
+        session, TeamGameStats, where=[TeamGameStats.game_id.in_(season_games)]
+    )
     teams_df = await load_table_as_dataframe(session, Team)
 
     if game.status in ("scheduled", "live"):
